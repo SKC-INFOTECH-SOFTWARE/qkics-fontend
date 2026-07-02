@@ -1,9 +1,9 @@
 // src/pages/booking.jsx
 import { useEffect, useState, useRef } from "react";
-import { FaSearch } from "react-icons/fa";
 import axiosSecure from "../components/utils/axiosSecure";
 
 import ExpertCard from "../components/profileFetch/expertBooking/ExpertCard";
+import { SearchInput } from "../components/ui";
 import { resolveProfileRoute } from "../components/utils/getUserProfileRoute";
 
 import { useNavigate } from "react-router-dom";
@@ -122,16 +122,12 @@ export default function Booking() {
           </div>
 
           {/* SEARCH */}
-          <div className="relative w-full lg:w-80">
-            <FaSearch className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search by name or expertise..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-input bg-muted/50 py-3 pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-ring/40 hover:bg-muted"
-            />
-          </div>
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search by name or expertise..."
+            className="w-full lg:w-80"
+          />
         </div>
 
         {/* RESULT COUNT */}

@@ -3,7 +3,7 @@ import axiosSecure from "../components/utils/axiosSecure";
 import InvestorCard from "../components/profileFetch/investorFetch/InvestorCard";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { PageHeader, FullPageLoader, EmptyState, LoadingSpinner } from "../components/ui";
+import { PageHeader, FullPageLoader, EmptyState, LoadingSpinner, SearchInput } from "../components/ui";
 
 export default function EntrepreneurConnect() {
   const { data: loggedUser } = useSelector((state) => state.user);
@@ -98,22 +98,20 @@ export default function EntrepreneurConnect() {
   }
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-4 max-w-7xl mx-auto md:pb-12 bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:pb-12">
       <PageHeader
         title={<>Connect with <span className="text-primary">Investors</span></>}
         description="Connect with strategic investors in the global QKICS community."
         size="lg"
         align="end"
       >
-        <div className="w-full md:w-auto">
-          <input
-            type="text"
-            placeholder="Search Investors..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full md:w-80 px-5 py-3 rounded-full text-sm font-bold border border-input bg-muted text-foreground placeholder:text-muted-foreground focus:border-primary hover:bg-muted/70 transition-all outline-none"
-          />
-        </div>
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search Investors..."
+          className="w-full md:w-80"
+        />
       </PageHeader>
 
       {(!Array.isArray(items) || items.length === 0) ? (
@@ -135,6 +133,7 @@ export default function EntrepreneurConnect() {
           <LoadingSpinner />
         </div>
       )}
+    </div>
     </div>
   );
 }

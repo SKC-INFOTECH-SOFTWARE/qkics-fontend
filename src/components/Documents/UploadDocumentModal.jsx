@@ -3,8 +3,7 @@ import axiosSecure from "../utils/axiosSecure";
 import { FiX, FiUpload, FiFileText } from "react-icons/fi";
 import useModalEscape from "../hooks/useModalEscape";
 
-export default function UploadDocumentModal({ isOpen, onClose, theme, onSuccess }) {
-    const isDark = theme === "dark";
+export default function UploadDocumentModal({ isOpen, onClose, onSuccess }) {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -62,32 +61,32 @@ export default function UploadDocumentModal({ isOpen, onClose, theme, onSuccess 
         }
     };
 
+    const fieldClass =
+        "w-full px-3.5 py-2.5 rounded-xl border border-input bg-muted text-sm text-foreground placeholder:text-muted-foreground outline-none transition-all focus:border-primary";
+    const labelClass = "block text-2xs font-bold uppercase tracking-wider mb-1.5 text-muted-foreground";
+
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div
-                className={`w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl ${isDark ? "bg-neutral-900 border border-neutral-800 text-white" : "bg-white text-gray-900"
-                    }`}
-            >
-                <div className="relative p-8 pb-4">
+            <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl bg-card text-foreground border border-border">
+                <div className="relative flex items-center gap-3 px-5 py-4 border-b border-border">
+                    <div className="h-9 w-9 shrink-0 rounded-xl bg-primary-soft flex items-center justify-center text-primary">
+                        <FiUpload className="text-lg" />
+                    </div>
+                    <div className="min-w-0">
+                        <h3 className="text-base font-bold leading-tight">Add New Resource</h3>
+                        <p className="text-2xs font-bold uppercase tracking-widest text-muted-foreground">Upload Document</p>
+                    </div>
                     <button
                         onClick={onClose}
-                        className={`absolute top-6 right-6 p-2 rounded-full transition-colors ${isDark ? "hover:bg-neutral-800 text-gray-400" : "hover:bg-gray-100 text-gray-500"
-                            }`}
+                        className="ml-auto p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
                     >
-                        <FiX className="text-xl" />
+                        <FiX className="text-lg" />
                     </button>
-
-                    <div className="flex items-center gap-2 mb-2 text-red-500 font-bold text-xs uppercase tracking-widest">
-                        <FiUpload /> Upload Document
-                    </div>
-                    <h3 className="text-2xl font-extrabold leading-tight">Add New Resource</h3>
                 </div>
 
-                <form onSubmit={handleSubmit} className="px-8 py-4 flex flex-col gap-4">
+                <form onSubmit={handleSubmit} className="px-5 py-4 flex flex-col gap-3.5">
                     <div>
-                        <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? "text-neutral-400" : "text-gray-500"}`}>
-                            Title
-                        </label>
+                        <label className={labelClass}>Title</label>
                         <input
                             type="text"
                             name="title"
@@ -95,39 +94,26 @@ export default function UploadDocumentModal({ isOpen, onClose, theme, onSuccess 
                             value={formData.title}
                             onChange={handleChange}
                             placeholder="Enter document title"
-                            className={`w-full px-4 py-3 rounded-xl border text-sm transition-all outline-none ${isDark
-                                    ? "bg-neutral-800 border-neutral-700 focus:border-red-500 text-white placeholder-neutral-500"
-                                    : "bg-gray-50 border-gray-200 focus:border-red-500 text-black placeholder-gray-400"
-                                }`}
+                            className={fieldClass}
                         />
                     </div>
 
                     <div>
-                        <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? "text-neutral-400" : "text-gray-500"}`}>
-                            Description
-                        </label>
+                        <label className={labelClass}>Description</label>
                         <textarea
                             name="description"
                             required
-                            rows={3}
+                            rows={2}
                             value={formData.description}
                             onChange={handleChange}
                             placeholder="Enter document description"
-                            className={`w-full px-4 py-3 rounded-xl border text-sm transition-all outline-none resize-none ${isDark
-                                    ? "bg-neutral-800 border-neutral-700 focus:border-red-500 text-white placeholder-neutral-500"
-                                    : "bg-gray-50 border-gray-200 focus:border-red-500 text-black placeholder-gray-400"
-                                }`}
+                            className={`${fieldClass} resize-none`}
                         />
                     </div>
 
                     <div>
-                        <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? "text-neutral-400" : "text-gray-500"}`}>
-                            File
-                        </label>
-                        <div className={`relative w-full rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-6 transition-all ${isDark
-                                ? "border-neutral-700 hover:border-red-500 bg-neutral-800/50"
-                                : "border-gray-200 hover:border-red-500 bg-gray-50/50"
-                            }`}>
+                        <label className={labelClass}>File</label>
+                        <div className="relative w-full rounded-xl border-2 border-dashed border-border bg-muted/40 flex flex-col items-center justify-center p-4 transition-all hover:border-primary">
                             <input
                                 type="file"
                                 name="file"
@@ -136,71 +122,51 @@ export default function UploadDocumentModal({ isOpen, onClose, theme, onSuccess 
                                 onChange={handleChange}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
-                            <div className="flex flex-col items-center gap-2 text-center pointer-events-none">
-                                <div className={`p-3 rounded-full ${isDark ? "bg-neutral-700 text-red-400" : "bg-red-50 text-red-500"}`}>
-                                    <FiFileText className="text-xl" />
+                            <div className="flex flex-col items-center gap-1.5 text-center pointer-events-none">
+                                <div className="p-2.5 rounded-full bg-primary-soft text-primary">
+                                    <FiFileText className="text-lg" />
                                 </div>
                                 {formData.file ? (
-                                    <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-black"}`}>{formData.file.name}</span>
+                                    <span className="text-sm font-semibold text-foreground break-all">{formData.file.name}</span>
                                 ) : (
                                     <>
-                                        <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-black"}`}>Click to upload or drag and drop</span>
-                                        <span className={`text-xs ${isDark ? "text-neutral-500" : "text-gray-400"}`}>PDF, DOC, DOCX up to 10MB</span>
+                                        <span className="text-sm font-semibold text-foreground">Click to upload or drag and drop</span>
+                                        <span className="text-2xs text-muted-foreground">PDF, DOC, DOCX up to 10MB</span>
                                     </>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    <div>
-                        <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? "text-neutral-400" : "text-gray-500"}`}>
-                            Access Type
-                        </label>
-                        <input
-                            type="text"
-                            value="FREE"
-                            disabled
-                            className={`w-full px-4 py-3 rounded-xl border text-sm font-bold opacity-70 cursor-not-allowed ${isDark
-                                    ? "bg-neutral-800 border-neutral-700 text-emerald-400"
-                                    : "bg-gray-100 border-gray-200 text-emerald-600"
-                                }`}
-                        />
-                        <p className={`text-2xs mt-2 font-medium ${isDark ? "text-neutral-500" : "text-gray-400"}`}>
-                            * Documents uploaded here are always set to FREE access type.
-                        </p>
+                    <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-2xs font-medium text-muted-foreground">
+                        <span className="text-3xs font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">FREE</span>
+                        Documents uploaded here are always set to FREE access.
                     </div>
 
                     {error && (
-                        <div className={`mt-2 p-3 rounded-lg border text-sm flex items-center gap-2 animate-shake ${isDark ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-red-50 border-red-100 text-red-600"
-                            }`}>
+                        <div className="p-3 rounded-lg border border-danger/20 bg-danger/10 text-danger text-sm flex items-center gap-2 animate-shake">
                             <FiX className="flex-shrink-0" />
                             {error}
                         </div>
                     )}
 
-                    <div className="flex gap-3 mt-4 pt-4 border-t border-dashed border-gray-200 dark:border-neutral-800">
+                    <div className="flex gap-3 pt-1">
                         <button
                             type="button"
                             onClick={onClose}
-                            className={`flex-1 px-4 py-3 font-bold rounded-xl border transition-all ${isDark
-                                    ? "border-neutral-700 hover:bg-neutral-700 text-white"
-                                    : "border-gray-200 hover:bg-gray-100 text-gray-700"
-                                }`}
+                            className="flex-1 px-4 py-2.5 font-bold text-sm rounded-xl border border-border text-foreground hover:bg-muted transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            disabled={isSubmitting}
-                            className={`flex-[2] px-4 py-3 font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all transform active:scale-95 ${isSubmitting || !formData.file
-                                    ? "bg-gray-400 cursor-not-allowed text-white"
-                                    : "bg-red-600 hover:bg-red-700 text-white shadow-red-500/25"
-                                }`}
+                            disabled={isSubmitting || !formData.file}
+                            className="flex-[2] px-4 py-2.5 font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-95 bg-primary text-primary-foreground hover:bg-primary-hover disabled:opacity-50 disabled:pointer-events-none"
                         >
                             {isSubmitting ? (
-                                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                             ) : (
-                                <FiUpload className="text-lg" />
+                                <FiUpload className="text-base" />
                             )}
                             {isSubmitting ? "Uploading..." : "Upload Document"}
                         </button>

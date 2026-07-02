@@ -106,28 +106,6 @@ export default function MyBookings() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary" />
-          <span className="text-2xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Loading bookings...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="max-w-sm rounded-2xl border border-border bg-card p-10 text-center">
-          <p className="mb-5 text-sm font-bold text-danger">{error}</p>
-          <Button onClick={fetchBookings}>Retry</Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-12">
@@ -169,7 +147,17 @@ export default function MyBookings() {
           ))}
         </div>
 
-        {bookings.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-24">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary" />
+            <span className="text-2xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Loading bookings...</span>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center gap-5 rounded-2xl border border-border bg-card py-20 text-center">
+            <p className="text-sm font-bold text-danger">{error}</p>
+            <Button onClick={fetchBookings}>Retry</Button>
+          </div>
+        ) : bookings.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border py-24 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
               <MdOutlineSchedule size={30} />

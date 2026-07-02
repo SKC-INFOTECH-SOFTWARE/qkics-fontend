@@ -4,7 +4,6 @@ import { FaEye, FaFileAlt } from "react-icons/fa";
 import DocumentDetailsModal from "../components/Documents/DocumentDetailsModal";
 
 export default function DocumentList({ theme, searchQuery = "", filter = "all", refreshTrigger = 0 }) {
-  const isDark = theme === "dark";
   const [documents, setDocuments] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [next, setNext] = useState(null);
@@ -59,33 +58,29 @@ export default function DocumentList({ theme, searchQuery = "", filter = "all", 
     return () => observer.disconnect();
   }, [next]);
 
-  const text = isDark ? "text-white" : "text-black";
-
   return (
     <div className="max-w-7xl py-1 mx-auto px-1">
       <div className="flex flex-col gap-3 md:gap-4">
         {documents?.map((doc) => (
           <div
             key={doc.uuid}
-            className={`group flex items-center gap-4 md:gap-6 p-2 md:p-2 rounded-xl md:rounded-xl border transition-all duration-500 hover:scale-[1.002] hover:shadow-xl animate-fadeIn ${isDark 
-              ? "bg-neutral-900/40 border-white/5 hover:bg-neutral-900 hover:border-white/10" 
-              : "bg-white border-black/5 hover:border-black/10 shadow-sm"}`}
+            className="group flex items-center gap-4 md:gap-6 p-3 rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 animate-fadeIn"
           >
             {/* Left: Icon */}
             <div className="flex-shrink-0">
-              <div className="h-10 w-10 md:h-10 md:w-10 rounded-xl md:rounded-xl bg-red-600/10 flex items-center justify-center text-red-500 shadow-inner group-hover:bg-red-600 group-hover:text-white transition-all duration-500 relative">
-                <FaFileAlt size={18} className="md:size-5 relative z-10" />
+              <div className="h-11 w-11 rounded-xl bg-primary-soft flex items-center justify-center text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                <FaFileAlt size={18} className="md:size-5" />
               </div>
             </div>
 
             {/* Middle: Content */}
             <div className="flex-grow min-w-0 pr-1 md:pr-4">
               <div className="flex items-center gap-2 md:gap-4 mb-0.5 md:mb-1 overflow-hidden">
-                <h3 className={`font-black text-sm md:text-base truncate group-hover:text-red-500 transition-colors ${text}`}>
+                <h3 className="font-bold text-sm md:text-base truncate text-foreground group-hover:text-primary transition-colors">
                   {doc.title}
                 </h3>
                 <span
-                  className={`flex-shrink-0 text-3xs md:text-3xs uppercase font-black tracking-[0.2em] px-2 md:px-3 py-0.5 md:py-1 rounded-full border ${doc.access_type === "PREMIUM"
+                  className={`flex-shrink-0 text-3xs uppercase font-black tracking-[0.2em] px-2 md:px-3 py-0.5 md:py-1 rounded-full border ${doc.access_type === "PREMIUM"
                     ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
                     : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                     }`}
@@ -93,26 +88,20 @@ export default function DocumentList({ theme, searchQuery = "", filter = "all", 
                   {doc.access_type}
                 </span>
               </div>
-              {/* <p className={`text-2xs md:text-sm font-medium opacity-50 line-clamp-1 max-w-2xl ${text}`}>
-                {doc.description}
-              </p> */}
             </div>
 
             {/* Right: Date & Action */}
             <div className="flex items-center gap-3 md:gap-10 flex-shrink-0">
-              {/* Date hidden on very small mobile if needed, but keeping it small */}
               <div className="hidden sm:flex flex-col items-end">
-                <span className="text-3xs md:text-2xs font-black uppercase tracking-widest opacity-30 mb-0.5">Updated</span>
-                <span className={`text-2xs md:text-xs font-bold whitespace-nowrap ${text}`}>
+                <span className="text-3xs md:text-2xs font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">Updated</span>
+                <span className="text-2xs md:text-xs font-bold whitespace-nowrap text-foreground">
                   {new Date(doc.updated_at || doc.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
-              
+
               <button
                 onClick={() => setSelectedDoc(doc.uuid)}
-                className={`flex items-center gap-2 md:gap-3 px-4 md:px-4 py-2.5 md:py-2 rounded-xl md:rounded-xl text-3xs md:text-2xs font-black uppercase tracking-[0.15em] md:tracking-[0.2em] transition-all shadow-lg active:scale-95 ${isDark
-                  ? "bg-white text-black hover:bg-neutral-200"
-                  : "bg-black text-white hover:bg-neutral-800"}`}
+                className="flex items-center gap-2 md:gap-3 px-4 py-2.5 md:py-2 rounded-xl text-3xs md:text-2xs font-black uppercase tracking-[0.15em] md:tracking-[0.2em] transition-all shadow-lg active:scale-95 bg-primary text-primary-foreground hover:bg-primary-hover"
               >
                 <FaEye size={12} className="md:size-3.5" />
                 <span className="hidden xs:inline">Analyze</span>
@@ -125,7 +114,7 @@ export default function DocumentList({ theme, searchQuery = "", filter = "all", 
 
       {next && (
         <div ref={loaderRef} className="py-8 flex justify-center w-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-red-500 border-black/10 dark:border-white/10" />
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-primary border-muted" />
         </div>
       )}
 

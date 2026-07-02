@@ -156,60 +156,39 @@ export default function CompanyPage() {
     }
   };
 
-  const text = isDark ? "text-white" : "text-black";
-
   return (
-    <div className={`min-h-screen py-4 ${isDark ? "bg-[#0a0a0a]" : "bg-[#f8f9fa]"}`}>
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="min-h-screen bg-background text-foreground py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* HEADER & TABS SELECTOR */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 animate-fadeIn">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 animate-fadeIn">
           <div className="max-w-xl">
-            <div className="flex items-center gap-3 mb-4">
-              {/* <div className="h-10 w-10 rounded-xl bg-red-600/10 flex items-center justify-center text-red-600">
-                <FaBuilding size={20} />
-              </div> */}
-              <h1 className={`text-2xl md:text-3xl font-bold tracking-tight ${text}`}>
-                Company <span className="text-red-600">Discovery</span>
-              </h1>
-            </div>
-            <p className={`text-sm tracking-wide font-medium leading-relaxed ${isDark ? "text-neutral-400" : "text-neutral-500"}`}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
+              Company <span className="text-primary">Discovery</span>
+            </h1>
+            <p className="text-sm font-medium leading-relaxed text-muted-foreground">
               Explore insights, updates, and innovations from across the organization. Track and manage your expert intelligence exchange.
             </p>
           </div>
 
-          {/*
-          want to add search functionality later, but it requires backend support for searching/filtering companies and posts. For now, we'll keep the UI clean and focused on discovery.
-          <input
-            type="text"
-            placeholder="Search companies..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={`w-full md:w-80 px-5 py-3 rounded-full text-sm font-bold border transition-all ${isDark
-                ? "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-red-500 hover:bg-white/10"
-                : "bg-black/5 border-black/10 text-black placeholder:text-black/30 focus:border-red-500 hover:bg-black/10"
-              } outline-none`}
-          /> */}
-          
-          <div className="flex-shrink-0">
-            <div className={`inline-flex p-1.5 rounded-2xl shadow-xl transition-all ${isDark ? "bg-white/5" : "bg-black/5"}`}>
-              {[
-                { id: "posts", label: "Posts", icon: <FaRegNewspaper size={14} /> },
-                { id: "companies", label: "Companies", icon: <FaThList size={14} /> }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2.5 px-6 py-2.5 md:px-8 md:py-3 rounded-xl text-2xs font-black uppercase tracking-widest transition-all duration-300 ${
-                    activeTab === tab.id
-                      ? "bg-red-600 text-white shadow-lg shadow-red-600/30"
-                      : isDark ? "text-neutral-500 hover:text-white" : "text-neutral-500 hover:text-black"
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+          {/* Segmented control tabs */}
+          <div className="inline-flex shrink-0 self-start gap-1 rounded-2xl border border-border bg-muted/50 p-1.5 md:self-end">
+            {[
+              { id: "posts", label: "Posts", icon: <FaRegNewspaper size={14} /> },
+              { id: "companies", label: "Companies", icon: <FaThList size={14} /> }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2.5 rounded-xl px-6 py-2.5 text-2xs font-black uppercase tracking-widest transition-all ${
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -217,48 +196,40 @@ export default function CompanyPage() {
         <div className="animate-fadeIn">
           {/* POSTS TAB */}
           {activeTab === "posts" && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* LEFT SIDEBAR (Empty for centering) */}
-              <aside className="hidden lg:block lg:col-span-3" />
-
-              {/* MAIN COLUMN (CENTER) */}
-              <div className="col-span-12 lg:col-span-6 space-y-8">
-                <div className="w-full space-y-6">
-                  {posts.length > 0 ? (
-                    posts.map((post, index) => {
-                      const nodeRef = posts.length === index + 1 ? lastElementRef : null;
-                      return (
-                        <div ref={nodeRef} key={post.id}>
-                          <CompanyPostCard 
-                            post={post} 
-                            isDark={isDark}                              
-                          />
-                        </div>
-                      );
-                    })
-                  ) : (
-                    !loadingPosts && (
-                      <div className="text-center py-24 animate-fadeIn glass rounded-3xl border border-dashed border-red-500/10">
-                        <FaRegNewspaper size={48} className="mx-auto mb-6 opacity-10 text-red-500" />
-                        <p className={`text-lg font-bold opacity-30 ${text}`}>No company posts discovered yet.</p>
-                        <p className={`text-2xs uppercase font-black tracking-widest opacity-20 mt-2 ${text}`}>Post insights to start the conversation</p>
+            <div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-8 lg:grid-cols-3">
+              {/* MAIN FEED */}
+              <div className="space-y-6 lg:col-span-2">
+                {posts.length > 0 ? (
+                  posts.map((post, index) => {
+                    const nodeRef = posts.length === index + 1 ? lastElementRef : null;
+                    return (
+                      <div ref={nodeRef} key={post.id}>
+                        <CompanyPostCard post={post} isDark={isDark} />
                       </div>
-                    )
-                  )}
-                  {loadingPosts && (
-                    <div className="flex flex-col items-center justify-center py-12 gap-4">
-                      <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-2xs font-black uppercase tracking-widest opacity-30">Synchronizing Posts...</p>
+                    );
+                  })
+                ) : (
+                  !loadingPosts && (
+                    <div className="rounded-2xl border border-dashed border-border py-24 text-center animate-fadeIn">
+                      <FaRegNewspaper size={44} className="mx-auto mb-5 text-muted-foreground/30" />
+                      <p className="text-base font-bold text-foreground">No company posts discovered yet.</p>
+                      <p className="mt-2 text-2xs font-black uppercase tracking-widest text-muted-foreground/60">Post insights to start the conversation</p>
                     </div>
-                  )}
-                </div>
+                  )
+                )}
+                {loadingPosts && (
+                  <div className="flex flex-col items-center justify-center gap-4 py-12">
+                    <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary"></div>
+                    <p className="text-2xs font-black uppercase tracking-widest text-muted-foreground">Synchronizing Posts...</p>
+                  </div>
+                )}
               </div>
 
               {/* RIGHT SIDEBAR (ADS) */}
-              <aside className="hidden lg:block lg:col-span-3">
-                  <div className="sticky top-24 space-y-8">
-                      <SponsorCard isDark={isDark} />
-                  </div>
+              <aside className="hidden lg:block">
+                <div className="sticky top-24 space-y-8">
+                  <SponsorCard isDark={isDark} />
+                </div>
               </aside>
             </div>
           )}
@@ -267,7 +238,7 @@ export default function CompanyPage() {
           {activeTab === "companies" && (
             <div className="animate-fadeIn">
               {companies.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {companies.map((company, index) => {
                     const nodeRef = companies.length === index + 1 ? lastElementRef : null;
                     return (
@@ -279,17 +250,17 @@ export default function CompanyPage() {
                 </div>
               ) : (
                 !loadingCompanies && (
-                  <div className="text-center py-24 animate-fadeIn glass rounded-3xl border border-dashed border-red-500/10">
-                    <FaBuilding size={48} className="mx-auto mb-6 opacity-10 text-red-500" />
-                    <p className={`text-lg font-bold opacity-30 ${text}`}>No organizations discovered yet.</p>
-                    <p className={`text-2xs uppercase font-black tracking-widest opacity-20 mt-2 ${text}`}>Be the first to list your company</p>
+                  <div className="rounded-2xl border border-dashed border-border py-24 text-center animate-fadeIn">
+                    <FaBuilding size={44} className="mx-auto mb-5 text-muted-foreground/30" />
+                    <p className="text-base font-bold text-foreground">No organizations discovered yet.</p>
+                    <p className="mt-2 text-2xs font-black uppercase tracking-widest text-muted-foreground/60">Be the first to list your company</p>
                   </div>
                 )
               )}
               {loadingCompanies && (
-                <div className="flex flex-col items-center justify-center py-12 gap-4">
-                  <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-2xs font-black uppercase tracking-widest opacity-30">Gathering Intelligence...</p>
+                <div className="flex flex-col items-center justify-center gap-4 py-12">
+                  <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary"></div>
+                  <p className="text-2xs font-black uppercase tracking-widest text-muted-foreground">Gathering Intelligence...</p>
                 </div>
               )}
             </div>

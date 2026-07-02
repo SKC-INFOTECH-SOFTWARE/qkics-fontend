@@ -186,14 +186,14 @@ function KnowledgeHubFeed() {
                             </div>
 
                         </div>
-                        <footer className="px-10 text-2xs font-bold text-muted-foreground uppercase tracking-[0.2em] space-y-2">
-                            <div className="flex gap-4">
+                        <footer className="pt-5 border-t border-border/60 space-y-3">
+                            <nav className="flex flex-wrap gap-x-4 gap-y-2 text-2xs font-bold text-muted-foreground uppercase tracking-[0.15em]">
                                 <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy</Link>
                                 <Link to="/terms-conditions" className="hover:text-primary transition-colors">Terms</Link>
                                 <Link to="/refund-policy" className="hover:text-primary transition-colors">Refund</Link>
                                 <a href="#" className="hover:text-primary transition-colors">Safety</a>
-                            </div>
-                            <p className="px-3">© 2026 QKICS GLOBAL</p>
+                            </nav>
+                            <p className="text-2xs font-bold text-muted-foreground/60 uppercase tracking-[0.15em]">© 2026 QKICS GLOBAL</p>
                         </footer>
                     </div>
                 </aside>

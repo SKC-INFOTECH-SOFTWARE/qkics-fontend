@@ -1,12 +1,8 @@
-import { useSelector } from "react-redux";
 import { FaBell, FaSync, FaCheckCircle, FaInbox } from "react-icons/fa";
 import { useNotifications } from "../context/NotificationContext";
-import { PageHeader, LoadingSpinner, EmptyState } from "../components/ui";
+import { PageHeader, LoadingSpinner } from "../components/ui";
 
 export default function NotificationPage() {
-  const { theme } = useSelector((state) => state.user);
-  const isDark = theme === "dark";
-
   const {
     notifications,
     unreadCount,
@@ -32,7 +28,7 @@ export default function NotificationPage() {
   };
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-8 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background text-foreground"><div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <PageHeader
         icon={<FaBell />}
         title="Notifications"
@@ -40,24 +36,21 @@ export default function NotificationPage() {
         align="center"
         size="md"
       >
-        <div className="flex items-center gap-4">
-          <div className={`px-4 py-2 rounded-xl flex gap-4 font-bold shadow-sm ${isDark ? "bg-white/5" : "bg-black/5"}`}>
-            <span className="text-red-500">
-              {unreadCount} <span className="text-xs uppercase opacity-70">Unread</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/50 px-4 py-2.5 font-bold">
+            <span className="text-primary">
+              {unreadCount} <span className="text-2xs uppercase tracking-wide text-muted-foreground">Unread</span>
             </span>
-            <span className="opacity-50">|</span>
-            <span>
-              {totalCount} <span className="text-xs uppercase opacity-70">Total</span>
+            <span className="h-4 w-px bg-border" />
+            <span className="text-foreground">
+              {totalCount} <span className="text-2xs uppercase tracking-wide text-muted-foreground">Total</span>
             </span>
           </div>
 
           <button
             onClick={() => fetchNotifications(true)}
             disabled={refreshing || loading}
-            className={`p-3 rounded-xl transition-all shadow-sm ${isDark
-              ? "bg-white/10 hover:bg-white/20 text-white"
-              : "bg-black/5 hover:bg-black/10 text-black"
-              }`}
+            className="rounded-xl border border-border bg-muted/50 p-3 text-foreground transition-all hover:bg-muted disabled:opacity-50"
             title="Refresh"
           >
             <FaSync className={`${refreshing ? "animate-spin" : ""}`} />
@@ -65,7 +58,7 @@ export default function NotificationPage() {
         </div>
       </PageHeader>
 
-      <div className="w-full h-px mb-8 bg-gradient-to-r from-transparent via-red-500/20 to-transparent" />
+      <div className="w-full h-px mb-8 bg-gradient-to-r from-transparent via-border to-transparent" />
 
       <div className="animate-fadeIn">
         {loading ? (
@@ -73,61 +66,60 @@ export default function NotificationPage() {
             <LoadingSpinner size="lg" />
           </div>
         ) : notifications.length === 0 ? (
-          <div className={`p-16 rounded-3xl text-center flex flex-col items-center justify-center border ${isDark ? "bg-neutral-900 border-neutral-800" : "bg-white border-gray-100 shadow-sm"}`}>
-            <div className={`p-6 rounded-full mb-4 ${isDark ? "bg-white/5 text-neutral-600" : "bg-gray-50 text-gray-300"}`}>
-              <FaInbox className="text-6xl" />
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted text-muted-foreground/40">
+              <FaInbox className="text-4xl" />
             </div>
-            <h3 className="text-xl font-bold mb-2">You're all caught up!</h3>
-            <p className="opacity-50 font-medium max-w-sm">
+            <h3 className="mb-1.5 text-lg font-bold text-foreground">You're all caught up!</h3>
+            <p className="max-w-sm text-sm font-medium text-muted-foreground">
               There are no new notifications to display right now. Check back later.
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {notifications.map((notif) => {
               const isRead = !!notif.readAt;
               return (
                 <div
                   key={notif._id}
                   onClick={() => handleMarkAsRead(notif._id, isRead)}
-                  className={`group relative p-5 rounded-2xl transition-all duration-300 cursor-pointer border shadow-sm ${isRead
-                    ? isDark
-                      ? "bg-transparent border-neutral-800 opacity-70"
-                      : "bg-transparent border-gray-200"
-                    : isDark
-                      ? "bg-neutral-900 border-red-500/30 hover:border-red-500"
-                      : "bg-white border-red-200 hover:border-red-400"
+                  className={`group relative cursor-pointer rounded-2xl border p-5 transition-all duration-300 ${isRead
+                    ? "border-border bg-card/50 hover:border-border hover:bg-card"
+                    : "border-primary/30 bg-card hover:border-primary/60 hover:shadow-lg hover:shadow-primary/5"
                     }`}
                 >
+                  {!isRead && (
+                    <span className="absolute left-0 top-5 h-8 w-1 -translate-x-px rounded-r-full bg-primary" />
+                  )}
                   <div className="flex gap-4">
-                    <div className="mt-1 flex-shrink-0">
+                    <div className="mt-1.5 flex-shrink-0">
                       <div
-                        className={`w-2.5 h-2.5 rounded-full transition-all ${isRead ? "bg-transparent border border-gray-400" : "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.6)]"
+                        className={`h-2.5 w-2.5 rounded-full transition-all ${isRead ? "border border-muted-foreground/40 bg-transparent" : "bg-primary shadow-[0_0_10px_var(--primary)]"
                           }`}
                       />
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1">
-                        <h4 className={`text-lg font-bold leading-tight ${!isRead ? "text-red-500" : ""}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+                        <h4 className={`text-base font-bold leading-tight ${isRead ? "text-foreground" : "text-primary"}`}>
                           {notif.renderedSubject}
                         </h4>
-                        <span className="text-xs font-bold opacity-40 uppercase tracking-widest whitespace-nowrap">
+                        <span className="whitespace-nowrap text-2xs font-bold uppercase tracking-widest text-muted-foreground/60">
                           {formatDate(notif.createdAt)}
                         </span>
                       </div>
 
-                      <p className={`text-sm leading-relaxed mb-3 ${isDark ? (isRead ? "text-gray-400" : "text-gray-300") : (isRead ? "text-gray-500" : "text-gray-700")}`}>
+                      <p className={`mb-3 text-sm leading-relaxed ${isRead ? "text-muted-foreground" : "text-foreground/80"}`}>
                         {notif.renderedBody}
                       </p>
 
                       <div className="flex items-center gap-2">
-                        <span className={`text-2xs font-black uppercase tracking-widest px-2 py-1 rounded-md ${isDark ? "bg-white/5" : "bg-black/5"}`}>
+                        <span className="rounded-md bg-muted px-2 py-1 text-2xs font-black uppercase tracking-widest text-muted-foreground">
                           {notif.event.replace(/_/g, " ")}
                         </span>
 
                         {isRead && (
-                          <span className="flex items-center gap-1 text-2xs font-bold text-emerald-500 uppercase tracking-wide">
+                          <span className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wide text-emerald-500">
                             <FaCheckCircle /> Read
                           </span>
                         )}
@@ -140,6 +132,7 @@ export default function NotificationPage() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }
