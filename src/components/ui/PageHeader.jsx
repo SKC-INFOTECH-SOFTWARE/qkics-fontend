@@ -1,4 +1,5 @@
 import { FaArrowLeft } from "react-icons/fa";
+import { Breadcrumb } from "./Breadcrumb";
 import { cn } from "./cn";
 
 // Unified page-title scale — every page header renders the same size for symmetry.
@@ -15,10 +16,11 @@ const alignments = {
   start: "md:items-start",
 };
 
-export function PageHeader({ icon, title, subtitle, description, onBack, size = "md", align = "end", className, children }) {
+export function PageHeader({ icon, title, subtitle, description, breadcrumb, onBack, size = "md", align = "end", className, children }) {
   return (
     <div className={cn("flex flex-col md:flex-row justify-between gap-6 mb-8 animate-fadeIn", alignments[align], className)}>
       <div className="flex-1">
+        {breadcrumb && <Breadcrumb items={breadcrumb} />}
         {onBack && (
           <button
             onClick={onBack}

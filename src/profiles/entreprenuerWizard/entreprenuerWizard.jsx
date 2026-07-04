@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosSecure from "../../components/utils/axiosSecure";
 import { useAlert } from "../../context/AlertContext";
+import { Breadcrumb } from "../../components/ui";
 
 import Steps from "./EntrepreneurWizardSteps";
 
@@ -205,6 +206,9 @@ export default function EntrepreneurWizard({ theme }) {
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#0f0f0f]" : "bg-[#f5f5f5]"} pb-16`}>
       <div className="max-w-5xl mx-auto px-4 pt-12">
+
+        <Breadcrumb items={[{ label: "Become an Entrepreneur" }]} />
+
         {/* HEADER */}
         <div className={`p-6 rounded-xl shadow mb-6 ${isDark ? "bg-neutral-900 text-white" : "bg-white text-black"}`}>
           <div className="flex items-start gap-4">

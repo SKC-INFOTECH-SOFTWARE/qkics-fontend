@@ -5,7 +5,7 @@ import { MdOutlineSchedule, MdPerson, MdOutlinePayments, MdChatBubbleOutline, Md
 
 import axiosSecure from "../utils/axiosSecure";
 import { useAlert } from "../../context/AlertContext";
-import { Button } from "../ui";
+import { Button, Breadcrumb } from "../ui";
 
 export default function MyBookings() {
   const { data: user } = useSelector((state) => state.user);
@@ -113,6 +113,7 @@ export default function MyBookings() {
         {/* HEADER */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
+            <Breadcrumb items={[{ label: "My Bookings" }]} />
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
               My <span className="text-primary">Bookings</span>
             </h1>

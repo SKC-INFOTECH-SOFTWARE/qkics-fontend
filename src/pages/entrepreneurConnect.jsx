@@ -101,6 +101,7 @@ export default function EntrepreneurConnect() {
     <div className="min-h-screen bg-background text-foreground">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:pb-12">
       <PageHeader
+        breadcrumb={[{ label: "Entrepreneur Connect" }]}
         title={<>Connect with <span className="text-primary">Investors</span></>}
         description="Connect with strategic investors in the global QKICS community."
         size="lg"

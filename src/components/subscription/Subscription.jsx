@@ -6,6 +6,7 @@ import { MdDiamond } from "react-icons/md";
 
 import axiosSecure from "../utils/axiosSecure";
 import { useAlert } from "../../context/AlertContext";
+import { Breadcrumb } from "../ui";
 
 export default function Subscription() {
     const navigate = useNavigate();
@@ -97,6 +98,7 @@ export default function Subscription() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
 
                 {/* HEADER */}
+                <Breadcrumb items={[{ label: "Subscription" }]} />
                 <div className="text-center mb-10 animate-fadeIn">
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-3">
                         Upgrade your <span className="text-primary">Impact</span>

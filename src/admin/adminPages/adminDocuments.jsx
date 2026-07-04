@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Breadcrumb } from "../../components/ui";
 import axiosSecure from "../../components/utils/axiosSecure";
 import { FaEdit, FaEye, FaSearch, FaFilter, FaPlus, FaFileAlt } from "react-icons/fa";
 import { MdToggleOn, MdToggleOff } from "react-icons/md";
@@ -75,6 +76,7 @@ export default function AdminDocuments({ theme }) {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb home={false} items={[{ label: "Dashboard", to: "/admin" }, { label: "Documents" }]} />
       {/* Header Area */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">

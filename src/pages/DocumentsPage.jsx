@@ -25,6 +25,7 @@ export default function DocumentsPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
 
         <PageHeader
+          breadcrumb={[{ label: "Documents" }]}
           title={<>Resource <span className="text-primary">Library</span></>}
           description="Access curated professional intelligence, technical documentation, and your personal asset collective."
           align="end"

@@ -7,6 +7,7 @@ import { useAlert } from "../../context/AlertContext";
 import { FaBuilding, FaThList, FaRegNewspaper, FaArrowLeft } from "react-icons/fa";
 import SponsorCard from "../../components/ui/SponsorCard";
 import ConfirmationAlert from "../../components/ui/ConfirmationAlert";
+import { Breadcrumb } from "../../components/ui";
 import { useNavigate } from "react-router-dom";
 
 export default function CompanyPage() {
@@ -162,6 +163,7 @@ export default function CompanyPage() {
         {/* HEADER & TABS SELECTOR */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 animate-fadeIn">
           <div className="max-w-xl">
+            <Breadcrumb items={[{ label: "Companies" }]} />
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
               Company <span className="text-primary">Discovery</span>
             </h1>

@@ -8,6 +8,7 @@ export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-8 md:py-12 max-w-4xl mx-auto">
       <PageHeader
+        breadcrumb={[{ label: "Privacy Policy" }]}
         title="Privacy Policy"
         subtitle="Last Updated: June 30, 2026"
         onBack={() => navigate(-1)}

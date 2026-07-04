@@ -20,6 +20,7 @@ import SignupModal from "../components/auth/Signup";
 import ModalOverlay from "../components/ui/ModalOverlay";
 import PostCard from "../components/posts/PostCard";
 import SponsorCard from "../components/ui/SponsorCard";
+import { Breadcrumb } from "../components/ui";
 
 function KnowledgeHubFeed() {
     const { data: loggedUser } = useSelector((state) => state.user);
@@ -200,6 +201,8 @@ function KnowledgeHubFeed() {
 
                 {/* MAIN FEED — always visible, dominant width */}
                 <main className="flex-1 min-w-0 max-w-2xl pb-4 space-y-6">
+
+                    <Breadcrumb items={[{ label: "Knowledge Hub" }]} />
 
                     {/* HEADER MOBILE */}
                     <div className="lg:hidden flex flex-col gap-1 mb-4">

@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import axiosSecure from "../components/utils/axiosSecure";
 
 import ExpertCard from "../components/profileFetch/expertBooking/ExpertCard";
-import { SearchInput } from "../components/ui";
+import { SearchInput, Breadcrumb } from "../components/ui";
 import { resolveProfileRoute } from "../components/utils/getUserProfileRoute";
 
 import { useNavigate } from "react-router-dom";
@@ -113,6 +113,7 @@ export default function Booking() {
         {/* HEADER */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between mb-8">
           <div>
+            <Breadcrumb items={[{ label: "Experts" }]} />
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
               Our <span className="text-primary">Experts</span>
             </h1>

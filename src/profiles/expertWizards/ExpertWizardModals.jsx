@@ -1,7 +1,7 @@
 // src/profiles/expert/ExpertWizardModals.jsx
 import React, { useState } from "react";
 
-/* ============================================================
+/* =========================================================
    EXPORTS
 ============================================================ */
 export {
@@ -95,7 +95,7 @@ function AddExperienceModal({ onClose, onCreate, isDark }) {
     }
     setSaving(true);
     try {
-      // ✅ Sanitize: Convert empty date strings to null for backend Compatibility
+      // ✅ Sanitize: Convert empty date strings to null for backend
       const payload = {
         ...form,
         end_date: form.end_date || null,
@@ -202,7 +202,7 @@ function AddExperienceModal({ onClose, onCreate, isDark }) {
 }
 
 
-/* ============================================================
+/* =========================================================
    ADD EDUCATION MODAL
 ============================================================ */
 function AddEducationModal({ onClose, onCreate, isDark }) {

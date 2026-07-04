@@ -3,7 +3,11 @@ import { cn } from "./cn";
 export function EmptyState({ icon, title, description, action, className }) {
   return (
     <div className={cn("py-20 text-center text-muted-foreground", className)}>
-      {icon && <div className="text-4xl mb-4 opacity-40">{icon}</div>}
+      {icon && (
+        <div className="flex justify-center text-4xl mb-4 opacity-40">
+          {icon}
+        </div>
+      )}
       {title && (
         <p className="text-sm font-black tracking-widest uppercase mb-1">
           {title}

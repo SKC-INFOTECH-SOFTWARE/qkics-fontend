@@ -7,6 +7,7 @@ export { default as Input } from "./Input";
 export { default as SearchInput } from "./SearchInput";
 export { default as Badge } from "./Badge";
 export { default as PageHeader } from "./PageHeader";
+export { default as Breadcrumb } from "./Breadcrumb";
 export { default as ContentSection } from "./ContentSection";
 export { default as BulletList } from "./BulletList";
 export { default as LoadingSpinner, FullPageLoader } from "./LoadingSpinner";

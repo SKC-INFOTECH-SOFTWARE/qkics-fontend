@@ -21,6 +21,7 @@ import ModalOverlay from "../components/ui/ModalOverlay";
 import LoginModal from "../components/auth/login";
 import SignupModal from "../components/auth/Signup";
 import UserBadge from "../components/ui/UserBadge";
+import { Breadcrumb } from "../components/ui";
 import CreatePostModal from "../components/posts/create_post";
 
 export default function SearchResultsPage() {
@@ -204,6 +205,7 @@ export default function SearchResultsPage() {
 
                     {/* SEARCH RESULTS HEADER */}
                     <div className="space-y-4">
+                        <Breadcrumb items={[{ label: "Search" }]} />
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                             Results for <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-orange-600">"{query}"</span>
                         </h1>

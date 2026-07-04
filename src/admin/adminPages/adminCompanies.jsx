@@ -3,6 +3,7 @@ import axiosSecure from "../../components/utils/axiosSecure";
 import { FaSearch, FaEye, FaBuilding, FaMapMarkerAlt, FaGlobe, FaBriefcase, FaTrash, FaEdit, FaCheck, FaTimes, FaCog } from "react-icons/fa";
 import { useAlert } from "../../context/AlertContext";
 import ConfirmationAlert from "../../components/ui/ConfirmationAlert";
+import { Breadcrumb } from "../../components/ui";
 import { resolveMedia } from "../../components/utils/mediaUrl";
 
 export default function AdminCompanies({ theme }) {
@@ -254,6 +255,7 @@ export default function AdminCompanies({ theme }) {
 
     return (
         <div className="space-y-6">
+            <Breadcrumb home={false} items={[{ label: "Dashboard", to: "/admin" }, { label: "Companies" }]} />
             {/* Header Area */}
             <div className="flex justify-between items-center">
                 <h1 className={`text-2xl font-semibold tracking-tight ${textStyle}`}>

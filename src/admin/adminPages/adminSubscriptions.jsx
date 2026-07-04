@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Breadcrumb } from "../../components/ui";
 import axiosSecure from "../../components/utils/axiosSecure";
 import SubscriptionFormModal from "../adminComponents/SubscriptionFormModal";
 import { FaEdit, FaSearch, FaFilter, FaPlus, FaBoxOpen } from "react-icons/fa";
@@ -52,6 +53,7 @@ export default function AdminSubscriptions({ theme }) {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb home={false} items={[{ label: "Dashboard", to: "/admin" }, { label: "Subscriptions" }]} />
       {/* Header Area */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">

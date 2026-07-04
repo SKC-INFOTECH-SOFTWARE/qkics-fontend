@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Breadcrumb } from "../../components/ui";
 import axiosSecure from "../../components/utils/axiosSecure";
 import { FaSearch, FaEye, FaCheck, FaTimes, FaUsers, FaArrowLeft, FaCheckCircle } from "react-icons/fa";
 import { useAlert } from "../../context/AlertContext";
@@ -108,6 +109,7 @@ export default function AdminExpertApplications({ theme }) {
 
     return (
         <div className="space-y-6">
+            <Breadcrumb home={false} items={[{ label: "Dashboard", to: "/admin" }, { label: "Expert Applications" }]} />
             {/* Header Area */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-3">

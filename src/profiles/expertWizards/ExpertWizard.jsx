@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import axiosSecure from "../../components/utils/axiosSecure";
 import { useAlert } from "../../context/AlertContext";
 import { useConfirm } from "../../context/ConfirmContext";
+import { Breadcrumb } from "../../components/ui";
 
 import Steps from "./ExpertWizardSteps";
 import {
@@ -298,6 +299,8 @@ export default function ExpertWizard({ theme }) {
     return (
         <div className={`min-h-screen ${isDark ? "bg-[#0f0f0f]" : "bg-[#f5f5f5]"} pb-16`}>
             <div className="max-w-5xl mx-auto px-4 pt-12">
+
+                <Breadcrumb items={[{ label: "Become an Expert" }]} />
 
                 {/* HEADER */}
                 <div className={`p-6 rounded-xl shadow mb-6 ${isDark ? "bg-neutral-900 text-white" : "bg-white text-black"}`}>
