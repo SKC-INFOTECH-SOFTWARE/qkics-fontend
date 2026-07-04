@@ -1,13 +1,13 @@
 // src/pages/Comments.jsx
 import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axiosSecure from "../utils/axiosSecure";
 import useCommentLike from "../hooks/useCommentLike";
 import { getAccessToken } from "../../redux/store/tokenManager";
 
 import { BiLike, BiSolidLike } from "react-icons/bi";
 import { FaCrown, FaRegComment } from "react-icons/fa";
-import { FiSend, FiTrash2 } from "react-icons/fi";
+import { FiSend, FiTrash2, FiX } from "react-icons/fi";
 
 import { useSelector } from "react-redux";
 import { resolveAvatar, resolveMedia } from "../utils/mediaUrl";
@@ -69,6 +69,24 @@ function ReplyInput({ replyContent, setReplyContent, onSubmit, onCancel, avatar 
 export default function Comments() {
   const { id: postId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /* Close → go back to the feed the user came from (fallback: Knowledge Hub) */
+  const handleClose = () => {
+    if (location.key && location.key !== "default") navigate(-1);
+    else navigate("/knowledge-hub");
+  };
+
+  /* Floating close button — reused across loading & main states */
+  const CloseButton = () => (
+    <button
+      onClick={handleClose}
+      aria-label="Close and return to feed"
+      className="fixed right-4 top-20 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-all hover:bg-primary hover:text-primary-foreground active:scale-95"
+    >
+      <FiX size={18} />
+    </button>
+  );
 
   const { showAlert } = useAlert();
   const { showConfirm } = useConfirm();
@@ -298,6 +316,7 @@ export default function Comments() {
   if (!post) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
+        <CloseButton />
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary" />
       </div>
     );
@@ -308,6 +327,7 @@ export default function Comments() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <CloseButton />
       <div className="mx-auto max-w-6xl px-3 pt-5 pb-24 sm:px-4 lg:px-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
 

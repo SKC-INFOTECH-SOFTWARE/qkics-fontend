@@ -9,6 +9,24 @@ const labelClass =
 const fieldClass =
   "w-full rounded-lg border border-input bg-muted/40 px-3.5 py-2.5 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-60";
 
+/* Read-only "label → value" row shown when viewing someone else's profile. */
+function InfoRow({ label, value, muted }) {
+  return (
+    <div className="flex flex-col gap-1 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <span
+        className={`text-sm font-semibold ${
+          muted ? "italic text-muted-foreground" : "text-foreground"
+        }`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export default function UserDetails({
   editMode,
   setEditMode,
@@ -31,6 +49,14 @@ export default function UserDetails({
       last_name: user.last_name || "",
       phone: reduxUser?.phone || user.phone || "",
     });
+
+  /* Derived display values for the read-only view */
+  const fullName =
+    [user.first_name, user.last_name].filter(Boolean).join(" ").trim() ||
+    user.username ||
+    "—";
+  const email = user.email || "";
+  const phone = user.phone || "";
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
@@ -79,62 +105,73 @@ export default function UserDetails({
         )}
       </div>
 
-      {/* FORM GRID */}
-      <div className="grid grid-cols-1 gap-4">
-
-        <div>
-          <label className={labelClass}>First Name</label>
-          <input
-            value={editMode ? editData.first_name : user.first_name || ""}
-            disabled={readOnly || !editMode}
-            onChange={(e) => setEditData({ ...editData, first_name: e.target.value })}
-            className={fieldClass}
-            maxLength={20}
+      {readOnly ? (
+        /* ── READ-ONLY VIEW (someone else's profile) ─────────────────── */
+        <div className="divide-y divide-border">
+          <InfoRow label="Full Name" value={fullName} />
+          <InfoRow
+            label="Email Address"
+            value={email || "Private"}
+            muted={!email}
+          />
+          <InfoRow
+            label="Phone Number"
+            value={phone || "Not Shared"}
+            muted={!phone}
           />
         </div>
+      ) : (
+        /* ── EDITABLE FORM (own profile) ─────────────────────────────── */
+        <div className="grid grid-cols-1 gap-4">
 
-        <div>
-          <label className={labelClass}>Last Name</label>
-          <input
-            value={editMode ? editData.last_name : user.last_name || ""}
-            disabled={readOnly || !editMode}
-            onChange={(e) => setEditData({ ...editData, last_name: e.target.value })}
-            className={fieldClass}
-            maxLength={20}
-          />
+          <div>
+            <label className={labelClass}>First Name</label>
+            <input
+              value={editMode ? editData.first_name : user.first_name || ""}
+              disabled={!editMode}
+              onChange={(e) => setEditData({ ...editData, first_name: e.target.value })}
+              className={fieldClass}
+              maxLength={20}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Last Name</label>
+            <input
+              value={editMode ? editData.last_name : user.last_name || ""}
+              disabled={!editMode}
+              onChange={(e) => setEditData({ ...editData, last_name: e.target.value })}
+              className={fieldClass}
+              maxLength={20}
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className={labelClass}>Email Address</label>
+            <input
+              value={user.email || reduxUser?.email || ""}
+              disabled
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className={labelClass}>Phone Number</label>
+            <input
+              value={
+                editMode
+                  ? editData.phone || ""
+                  : user.phone || reduxUser?.phone || ""
+              }
+              disabled={!editMode}
+              onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+              className={fieldClass}
+              placeholder={editMode ? "Enter phone number" : ""}
+            />
+          </div>
+
         </div>
-
-        <div className="md:col-span-2">
-          <label className={labelClass}>Email Address</label>
-          <input
-            value={
-              isOwnProfile
-                ? user.email || reduxUser?.email || ""
-                : user.email || "Private"
-            }
-            disabled
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className={labelClass}>Phone Number</label>
-          <input
-            value={
-              editMode
-                ? editData.phone || ""
-                : isOwnProfile
-                  ? user.phone || reduxUser?.phone || ""
-                  : user.phone || "Not Shared"
-            }
-            disabled={!editMode}
-            onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-            className={fieldClass}
-            placeholder={editMode ? "Enter phone number" : ""}
-          />
-        </div>
-
-      </div>
+      )}
     </div>
   );
 }
