@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { FaBell, FaSync, FaCheckCircle, FaInbox } from "react-icons/fa";
 import { useNotifications } from "../context/NotificationContext";
 import { PageHeader, LoadingSpinner } from "../components/ui";
@@ -12,6 +13,12 @@ export default function NotificationPage() {
     fetchNotifications,
     markAsRead,
   } = useNotifications();
+
+  // Pull the freshest full list every time the inbox screen is opened.
+  useEffect(() => {
+    fetchNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleMarkAsRead = (id, isAlreadyRead) => {
     markAsRead(id, isAlreadyRead);

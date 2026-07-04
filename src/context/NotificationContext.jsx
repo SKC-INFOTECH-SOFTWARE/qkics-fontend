@@ -1,10 +1,16 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import axiosSecure from "../components/utils/axiosSecure";
+import {
+    getNotifications,
+    markNotificationRead,
+} from "../components/utils/notificationApi";
 
 const NotificationContext = createContext();
 
 export const useNotifications = () => useContext(NotificationContext);
+
+// How often we re-check the unread badge while the tab is open & visible.
+const BADGE_POLL_MS = 30000; // 30s
 
 export const NotificationProvider = ({ children }) => {
     const user = useSelector((state) => state.user?.data);
@@ -14,23 +20,26 @@ export const NotificationProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
-    const fetchNotifications = async (isRefresh = false, isBackground = false) => {
-        if (!user) return;
+    // Notification service keys notifications by the Django user PK (as a string).
+    const userId = user?.id;
 
-        if (!isBackground) {
-            if (isRefresh) setRefreshing(true);
-            else setLoading(true);
-        }
+    /* Full inbox fetch (list + counts) — used on notification page open
+       and on manual refresh. Heavier: pulls the latest 20 items. */
+    const fetchNotifications = async (isRefresh = false) => {
+        if (!userId) return;
+
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
 
         try {
-            const res = await axiosSecure.get("/v1/notifications/", {
-                params: {
-                    channel: "IN_APP",
-                    limit: 20,
-                },
+            const res = await getNotifications({
+                userId,
+                channel: "IN_APP",
+                limit: 20,
+                offset: 0,
             });
 
-            // API returns { success, data: { notifications, unreadCount, total } }
+            // API returns { data: { notifications, unreadCount, total } }
             const data = res.data?.data;
 
             setNotifications(Array.isArray(data?.notifications) ? data.notifications : []);
@@ -39,37 +48,65 @@ export const NotificationProvider = ({ children }) => {
         } catch (err) {
             console.error("Failed to fetch notifications:", err);
         } finally {
-            if (!isBackground) {
-                if (isRefresh) setRefreshing(false);
-                else setLoading(false);
-            }
+            if (isRefresh) setRefreshing(false);
+            else setLoading(false);
+        }
+    };
+
+    /* Lightweight badge poll — only the counts, tiny payload (limit=1).
+       Runs on an interval app-wide without clobbering the list. */
+    const refreshUnreadCount = async () => {
+        if (!userId) return;
+        try {
+            const res = await getNotifications({
+                userId,
+                channel: "IN_APP",
+                limit: 1,
+                offset: 0,
+            });
+            const data = res.data?.data;
+            setUnreadCount(data?.unreadCount || 0);
+            setTotalCount(data?.total || 0);
+        } catch {
+            /* silent — background badge poll */
         }
     };
 
     useEffect(() => {
-        let intervalId;
-        if (user) {
-            fetchNotifications();
-
-            // Poll for notifications every 10 seconds in the background
-            intervalId = setInterval(() => {
-                fetchNotifications(false, true);
-            }, 10000);
-        } else {
+        if (!userId) {
             setNotifications([]);
             setUnreadCount(0);
             setTotalCount(0);
+            setLoading(false);
+            return;
         }
 
-        return () => {
-            if (intervalId) clearInterval(intervalId);
+        // Populate list + badge once on login / app boot.
+        fetchNotifications();
+
+        // Poll the badge only while the tab is actually visible.
+        const tick = () => {
+            if (document.visibilityState === "visible") refreshUnreadCount();
         };
-    }, [user]);
+        const intervalId = setInterval(tick, BADGE_POLL_MS);
+
+        // And re-check immediately when the user returns to the tab.
+        const onVisible = () => {
+            if (document.visibilityState === "visible") refreshUnreadCount();
+        };
+        document.addEventListener("visibilitychange", onVisible);
+
+        return () => {
+            clearInterval(intervalId);
+            document.removeEventListener("visibilitychange", onVisible);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
 
     const markAsRead = async (id, isAlreadyRead) => {
         if (isAlreadyRead) return;
 
-        // FIX: use _id (from API) instead of id
+        // Optimistic: `id` is the "_id" from the GET list response.
         setNotifications((prev) =>
             prev.map((notif) =>
                 notif._id === id ? { ...notif, readAt: new Date().toISOString() } : notif
@@ -78,7 +115,7 @@ export const NotificationProvider = ({ children }) => {
         setUnreadCount((prev) => Math.max(0, prev - 1));
 
         try {
-            await axiosSecure.post(`/v1/notifications/${id}/read/`);
+            await markNotificationRead(id);
         } catch (err) {
             console.error("Failed to mark notification as read:", err);
             fetchNotifications();
@@ -94,6 +131,7 @@ export const NotificationProvider = ({ children }) => {
                 loading,
                 refreshing,
                 fetchNotifications,
+                refreshUnreadCount,
                 markAsRead,
             }}
         >
