@@ -167,7 +167,7 @@ export default function MyBookings() {
             <p className="text-sm text-muted-foreground">Book a session to get started.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {bookings.map((booking) => {
               const status = getStatusConfig(booking);
               const startDate = new Date(booking.start_datetime);
@@ -187,102 +187,90 @@ export default function MyBookings() {
               return (
                 <div
                   key={booking.uuid}
-                  className="group flex flex-col rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5"
+                  className="group flex flex-col rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
                 >
                   {/* HEADER */}
-                  <div className="mb-4 flex items-start gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground">
-                      <MdPerson size={24} />
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground">
+                      <MdPerson size={20} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="truncate text-base font-bold text-foreground">{otherPersonName}</h4>
-                      <div className="mt-1.5 flex flex-wrap gap-1.5">
-                        <span className={`rounded-full border px-2.5 py-0.5 text-3xs font-bold uppercase tracking-wide ${status.color}`}>
+                      <h4 className="truncate text-sm font-bold text-foreground">{otherPersonName}</h4>
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        <span className={`rounded-full border px-2 py-0.5 text-3xs font-bold uppercase tracking-wide ${status.color}`}>
                           {status.label}
                         </span>
                         {booking._role === "attending" && (
-                          <span className="rounded-full border border-primary/20 bg-primary-soft px-2.5 py-0.5 text-3xs font-bold uppercase tracking-wide text-primary">
+                          <span className="rounded-full border border-primary/20 bg-primary-soft px-2 py-0.5 text-3xs font-bold uppercase tracking-wide text-primary">
                             My Booking
                           </span>
                         )}
                         {booking._role === "conducting" && (
-                          <span className="rounded-full border border-border bg-muted px-2.5 py-0.5 text-3xs font-bold uppercase tracking-wide text-muted-foreground">
+                          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-3xs font-bold uppercase tracking-wide text-muted-foreground">
                             My Session
                           </span>
                         )}
                       </div>
                     </div>
-                  </div>
-
-                  {/* SCHEDULE */}
-                  <div className="mb-4 rounded-xl bg-muted/40 p-3.5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <MdOutlineSchedule size={18} className="mt-0.5 shrink-0 text-primary" />
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">
-                            {startDate.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
-                          </p>
-                          <p className="text-xs font-medium text-muted-foreground">
-                            {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            {' — '}
-                            {endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-2xs font-bold uppercase tracking-wide text-muted-foreground">
-                        {isVideo ? <MdVideocam size={13} className="text-primary" /> : <MdChatBubbleOutline size={13} className="text-primary" />}
-                        {isVideo ? "Video" : "Chat"}
-                      </div>
+                    <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-muted/40 px-2 py-1 text-2xs font-bold uppercase tracking-wide text-muted-foreground">
+                      {isVideo ? <MdVideocam size={13} className="text-primary" /> : <MdChatBubbleOutline size={13} className="text-primary" />}
+                      {isVideo ? "Video" : "Chat"}
                     </div>
                   </div>
 
-                  {/* META */}
-                  <div className="mb-5 grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="mb-1 text-2xs font-bold uppercase tracking-wide text-muted-foreground">Duration</p>
-                      <div className="flex items-center gap-1.5">
-                        <MdOutlineTimer className="text-primary" size={15} />
-                        <span className="text-sm font-bold text-foreground">{durationMins}m</span>
-                      </div>
+                  {/* DETAILS — schedule + duration + fee in one compact box */}
+                  <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
+                    <div className="flex items-center gap-2">
+                      <MdOutlineSchedule size={15} className="shrink-0 text-primary" />
+                      <span className="font-semibold text-foreground">
+                        {startDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </span>
+                      <span className="ml-auto font-medium text-muted-foreground">
+                        {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} — {endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                    <div className="text-right">
-                      <p className="mb-1 text-2xs font-bold uppercase tracking-wide text-muted-foreground">Fee</p>
-                      <div className="flex items-center justify-end gap-1.5">
-                        <MdOutlinePayments className="text-primary" size={15} />
-                        <span className="text-sm font-bold text-foreground">{booking.price !== undefined ? `₹${booking.price}` : "Free"}</span>
-                      </div>
+                    <div className="mt-2 flex items-center gap-4 border-t border-border pt-2">
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <MdOutlineTimer size={14} className="text-primary" />
+                        <span className="font-bold text-foreground">{durationMins}m</span>
+                      </span>
+                      <span className="ml-auto flex items-center gap-1.5 text-muted-foreground">
+                        <MdOutlinePayments size={14} className="text-primary" />
+                        <span className="font-bold text-foreground">{booking.price !== undefined ? `₹${booking.price}` : "Free"}</span>
+                      </span>
                     </div>
                   </div>
 
                   {/* ACTION */}
                   {canJoin && (
-                    <div className="mt-auto">
+                    <div className="mt-3">
                       {now < startDate ? (
                         // Not started yet
-                        <Button fullWidth variant="secondary" disabled>
-                          <MdOutlineSchedule size={18} />
+                        <Button fullWidth size="sm" variant="secondary" disabled>
+                          <MdOutlineSchedule size={16} />
                           Starts at {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </Button>
                       ) : now > endDate ? (
                         // Session time is over — disable start buttons
-                        <Button fullWidth variant="secondary" disabled>
-                          <MdOutlineTimer size={18} />
+                        <Button fullWidth size="sm" variant="secondary" disabled>
+                          <MdOutlineTimer size={16} />
                           Session Ended
                         </Button>
                       ) : isVideo ? (
                         <Button
                           fullWidth
+                          size="sm"
                           onClick={() => booking.call_room_id ? navigate(`/video-call/${booking.call_room_id}`) : showAlert("Video room not ready yet", "info")}
                         >
-                          <MdVideocam size={18} /> Start Video Call
+                          <MdVideocam size={16} /> Start Video Call
                         </Button>
                       ) : (
                         <Button
                           fullWidth
+                          size="sm"
                           onClick={() => navigate(booking.chat_room_id ? `/chat/${booking.chat_room_id}` : '/chat')}
                         >
-                          <MdChatBubbleOutline size={18} /> {booking.session_type === "CHAT" ? "Start Chat" : "Open Chat"}
+                          <MdChatBubbleOutline size={16} /> {booking.session_type === "CHAT" ? "Start Chat" : "Open Chat"}
                         </Button>
                       )}
                     </div>

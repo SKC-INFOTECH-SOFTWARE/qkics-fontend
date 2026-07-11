@@ -236,21 +236,24 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
   };
 
   if (loading) return (
-    <div className="flex flex-col items-center justify-center h-screen bg-neutral-950 text-white">
-      <div className="w-12 h-12 rounded-full border-4 border-neutral-800 border-t-blue-500 animate-spin" />
-      <p className="mt-4 text-neutral-400 text-sm">Connecting to meeting…</p>
+    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-neutral-900 to-black text-white">
+      <div className="relative flex items-center justify-center">
+        <span className="absolute h-20 w-20 rounded-full bg-red-500/10 animate-ping" />
+        <div className="h-14 w-14 rounded-full border-4 border-white/10 border-t-red-500 animate-spin" />
+      </div>
+      <p className="mt-6 text-sm font-medium tracking-wide text-neutral-400">Connecting to your session…</p>
     </div>
   );
 
   if (error) return (
-    <div className="flex flex-col items-center justify-center h-screen bg-neutral-950 text-white gap-4 px-6 text-center">
-      <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
-        <FaPhoneSlash className="text-red-400 text-2xl" />
+    <div className="flex flex-col items-center justify-center h-screen gap-5 bg-gradient-to-b from-neutral-900 to-black px-6 text-center text-white">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-500/10 ring-1 ring-red-500/30">
+        <FaPhoneSlash className="text-2xl text-red-400" />
       </div>
-      <p className="text-neutral-200">{error}</p>
+      <p className="max-w-sm text-sm leading-relaxed text-neutral-300">{error}</p>
       <button
         onClick={onCallEnd}
-        className="px-5 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-sm transition"
+        className="rounded-xl bg-white/10 px-6 py-2.5 text-sm font-semibold transition hover:bg-white/20"
       >
         Go back
       </button>
@@ -262,7 +265,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
   return (
     <div className="relative flex flex-col h-screen bg-neutral-950 text-white overflow-hidden">
       {/* ── Top bar ── */}
-      <header className="flex items-center justify-between px-3 sm:px-5 py-2 sm:py-3 bg-neutral-900/80 backdrop-blur border-b border-neutral-800 z-20">
+      <header className="flex items-center justify-between px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-md z-20">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 shrink-0">
             <FaCircle className="text-red-500 text-3xs animate-pulse" />
@@ -300,25 +303,28 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
       </header>
 
       {/* ── Stage ── */}
-      <div className="flex-1 flex overflow-hidden">
-        <section className="relative flex-1 bg-black flex items-center justify-center">
+      <div className="flex-1 flex overflow-hidden -mt-14">
+        <section className="relative flex-1 bg-gradient-to-b from-neutral-900 to-black flex items-center justify-center">
           {lk.screenShareTrack ? (
             <SafeVideoRenderer track={lk.screenShareTrack} isScreen={true} />
           ) : lk.remoteVideoTrack ? (
             <div className="relative w-full h-full flex items-center justify-center">
               <SafeVideoRenderer track={lk.remoteVideoTrack} />
               {lk.remoteName && (
-                <div className="absolute top-4 left-4 px-3 py-1.5 rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-xs font-bold tracking-wide animate-fadeIn">
+                <div className="absolute top-20 left-4 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md ring-1 ring-white/10 text-xs font-semibold tracking-wide animate-fadeIn">
                   {lk.remoteName}
                 </div>
               )}
             </div>
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-500 gap-3">
-              <div className="w-20 h-20 rounded-full bg-neutral-800 flex items-center justify-center">
-                <FaVideo className="text-2xl text-neutral-600" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-neutral-500 gap-4">
+              <div className="relative flex items-center justify-center">
+                <span className="absolute h-24 w-24 rounded-full bg-red-500/5 animate-ping" />
+                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+                  <FaVideo className="text-2xl text-neutral-500" />
+                </div>
               </div>
-              <p className="text-sm">
+              <p className="text-sm font-medium text-neutral-400">
                 {lk.isConnected ? "Waiting for the other participant to join…" : "Connecting…"}
               </p>
             </div>
@@ -326,13 +332,13 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
 
           {/* Remote Side-PiP (Visible when screen sharing) */}
           {lk.screenShareTrack && lk.remoteVideoTrack && (
-            <div className="absolute bottom-52 sm:bottom-64 right-2 sm:right-4 w-28 sm:w-48 aspect-video rounded-lg overflow-hidden border border-neutral-700 shadow-2xl z-20 transition-all duration-500">
+            <div className="absolute bottom-52 sm:bottom-64 right-2 sm:right-4 w-28 sm:w-48 aspect-video rounded-xl overflow-hidden ring-1 ring-white/15 shadow-2xl z-20 transition-all duration-500">
               <SafeVideoRenderer track={lk.remoteVideoTrack} />
             </div>
           )}
 
           {/* Self PiP */}
-          <div className="absolute bottom-20 sm:bottom-24 right-2 sm:right-4 w-24 sm:w-44 aspect-video rounded-lg overflow-hidden border border-neutral-700 shadow-xl bg-neutral-800">
+          <div className="group absolute bottom-24 sm:bottom-28 right-2 sm:right-4 w-24 sm:w-44 aspect-video rounded-xl overflow-hidden ring-1 ring-white/15 shadow-2xl bg-neutral-800 transition-all duration-300 hover:ring-red-500/50">
             {lk.isCamOn && lk.localVideoTrack ? (
               <SafeVideoRenderer track={lk.localVideoTrack} isLocal={true} />
             ) : (
@@ -340,7 +346,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
                 <FaVideoSlash className="text-neutral-600 text-lg sm:text-xl" />
               </div>
             )}
-            <span className="absolute bottom-1 left-1 sm:left-2 text-2xs sm:text-2xs font-medium px-1 sm:px-1.5 py-0.5 rounded bg-black/60">
+            <span className="absolute bottom-1.5 left-1.5 sm:left-2 text-2xs font-semibold px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm">
               You
             </span>
           </div>
@@ -357,16 +363,16 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
               onClick={() => setActivePanel(null)}
               className="sm:hidden fixed inset-0 bg-black/60 z-20"
             />
-            <aside className="fixed sm:static inset-x-0 bottom-0 sm:inset-auto z-30 sm:z-10 h-[75vh] max-h-[75vh] sm:h-auto sm:max-h-none w-full sm:w-[360px] bg-neutral-900 border-t sm:border-t-0 sm:border-l border-neutral-800 flex flex-col rounded-t-2xl sm:rounded-none overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
-              <div className="flex gap-1">
+            <aside className="fixed sm:static inset-x-0 bottom-0 sm:inset-auto z-30 sm:z-10 h-[75vh] max-h-[75vh] sm:h-auto sm:max-h-none w-full sm:w-[360px] bg-neutral-900/95 backdrop-blur-xl border-t sm:border-t-0 sm:border-l border-white/10 flex flex-col rounded-t-2xl sm:rounded-none overflow-hidden sm:m-3 sm:rounded-2xl sm:border">
+            <div className="flex items-center justify-between px-3 py-2.5 border-b border-white/10">
+              <div className="flex gap-1 rounded-xl bg-black/30 p-1">
                 <button
                   onClick={() => {
                     if (activePanel !== "chat") openPanel("chat");
                   }}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition ${
                     activePanel === "chat"
-                      ? "bg-neutral-800 text-white"
+                      ? "bg-white/10 text-white shadow-sm"
                       : "text-neutral-400 hover:text-neutral-200"
                   }`}
                 >
@@ -376,9 +382,9 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
                   onClick={() => {
                     if (activePanel !== "notes") setActivePanel("notes");
                   }}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition ${
                     activePanel === "notes"
-                      ? "bg-neutral-800 text-white"
+                      ? "bg-white/10 text-white shadow-sm"
                       : "text-neutral-400 hover:text-neutral-200"
                   }`}
                 >
@@ -387,7 +393,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
               </div>
               <button
                 onClick={() => setActivePanel(null)}
-                className="p-2 text-neutral-400 hover:text-white rounded-md hover:bg-neutral-800 transition"
+                className="p-2 text-neutral-400 hover:text-white rounded-lg hover:bg-white/10 transition"
               >
                 <FaTimes className="text-xs" />
               </button>
@@ -402,20 +408,20 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
                     </p>
                   )}
                   {chat.messages.map((m, i) => (
-                    <div key={m.id || i} className="flex flex-col">
-                      <span className="text-xs font-medium text-blue-400">{m.senderUsername}</span>
+                    <div key={m.id || i} className="flex flex-col gap-1">
+                      <span className="text-2xs font-bold uppercase tracking-wide text-red-400">{m.senderUsername}</span>
                       {m.isFile ? (
                         <a
                           href={m.fileUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-sm text-emerald-400 hover:underline break-all"
+                          className="inline-flex w-fit items-center gap-1.5 rounded-xl bg-white/5 px-3 py-2 text-sm text-emerald-400 ring-1 ring-white/10 hover:bg-white/10 break-all"
                         >
-                          <FaPaperclip className="inline mr-1 text-xs" />
+                          <FaPaperclip className="text-xs" />
                           {m.fileName}
                         </a>
                       ) : (
-                        <span className="text-sm text-neutral-200 whitespace-pre-wrap break-words">
+                        <span className="w-fit max-w-full rounded-2xl rounded-tl-sm bg-white/5 px-3 py-2 text-sm text-neutral-100 ring-1 ring-white/5 whitespace-pre-wrap break-words">
                           {m.text}
                         </span>
                       )}
@@ -452,11 +458,11 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
                     }}
                     onBlur={() => chat.sendTyping(false)}
                     placeholder="Type a message"
-                    className="flex-1 bg-neutral-800 border border-neutral-700 focus:border-blue-500 focus:outline-none rounded-md px-3 py-2 text-sm placeholder-neutral-500"
+                    className="flex-1 bg-white/5 border border-white/10 focus:border-red-500/60 focus:ring-2 focus:ring-red-500/20 focus:outline-none rounded-full px-4 py-2 text-sm placeholder-neutral-500"
                   />
                   <button
                     type="submit"
-                    className="p-2 text-white bg-blue-600 hover:bg-blue-500 rounded-md transition disabled:opacity-40"
+                    className="flex h-9 w-9 items-center justify-center text-white bg-red-600 hover:bg-red-500 rounded-full transition disabled:opacity-40 disabled:hover:bg-red-600"
                     disabled={!chatInput.trim()}
                   >
                     <FaPaperPlane className="text-sm" />
@@ -475,11 +481,11 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
                   onChange={(e) => setNote(e.target.value)}
                   onBlur={handleNoteSave}
                   placeholder="Write your notes here…"
-                  className="flex-1 bg-neutral-950 border border-neutral-800 focus:border-blue-500 focus:outline-none rounded-md p-3 text-sm placeholder-neutral-600 text-neutral-200 resize-none"
+                  className="flex-1 bg-black/30 border border-white/10 focus:border-red-500/60 focus:ring-2 focus:ring-red-500/20 focus:outline-none rounded-xl p-3 text-sm placeholder-neutral-600 text-neutral-200 resize-none"
                 />
                 <button
                   onClick={handleNoteSave}
-                  className="py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-sm font-medium transition"
+                  className="py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-sm font-semibold transition shadow-lg shadow-red-600/20"
                 >
                   Save note
                 </button>
@@ -492,7 +498,7 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
 
       {/* ── Floating toolbar ── */}
       <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30">
-        <div className="flex items-center gap-1.5 bg-neutral-900/95 backdrop-blur-md border border-neutral-800 rounded-full px-2 py-2 shadow-2xl">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-black/60 backdrop-blur-xl ring-1 ring-white/10 rounded-2xl px-2.5 py-2.5 shadow-2xl shadow-black/50">
           <ToolbarButton
             onClick={lk.toggleMic}
             active={lk.isMicOn}
@@ -545,15 +551,15 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
             label="Notes"
           />
 
-          <div className="w-px h-8 bg-neutral-800 mx-0.5 sm:mx-1" />
+          <div className="w-px h-8 bg-white/10 mx-0.5 sm:mx-1" />
 
           <button
             onClick={triggerEndCall}
-            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 h-10 sm:h-12 rounded-full bg-red-600 hover:bg-red-500 transition shadow-lg shadow-red-500/20"
+            className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 h-10 sm:h-12 rounded-2xl bg-red-600 hover:bg-red-500 transition shadow-lg shadow-red-600/30 active:scale-95"
             title="End call"
           >
             <FaPhoneSlash className="text-sm sm:text-base" />
-            <span className="text-xs sm:text-sm font-medium">End</span>
+            <span className="text-xs sm:text-sm font-semibold">End</span>
           </button>
         </div>
       </div>
@@ -602,25 +608,25 @@ function ConfirmationModal({ isOpen, onConfirm, onCancel, title, message }) {
 }
 
 function ToolbarButton({ onClick, active = true, highlight = false, icon, label, badge = 0, disabled = false }) {
-  const base = "relative flex flex-col items-center justify-center w-11 sm:w-14 h-10 sm:h-12 rounded-full transition text-2xs gap-0.5";
+  const base = "relative flex items-center justify-center w-11 sm:w-12 h-10 sm:h-12 rounded-xl transition-all active:scale-95";
   const style = highlight
-    ? "bg-blue-600 hover:bg-blue-500 text-white"
+    ? "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/30"
     : active
-    ? "bg-neutral-800 hover:bg-neutral-700 text-white"
-    : "bg-red-600/90 hover:bg-red-500 text-white";
-  
+    ? "bg-white/10 hover:bg-white/20 text-white"
+    : "bg-red-500/90 hover:bg-red-500 text-white";
+
   const disabledStyle = disabled ? "opacity-30 cursor-not-allowed grayscale" : "";
 
   return (
-    <button 
-      onClick={disabled ? undefined : onClick} 
-      className={`${base} ${style} ${disabledStyle}`} 
+    <button
+      onClick={disabled ? undefined : onClick}
+      className={`${base} ${style} ${disabledStyle}`}
       title={label}
       disabled={disabled}
     >
-      <span className="text-sm sm:text-base">{icon}</span>
+      <span className="text-sm sm:text-lg">{icon}</span>
       {badge > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[16px] sm:min-w-[18px] h-[16px] sm:h-[18px] px-1 rounded-full bg-red-500 text-2xs sm:text-2xs font-semibold flex items-center justify-center">
+        <span className="absolute -top-1 -right-1 min-w-[16px] sm:min-w-[18px] h-[16px] sm:h-[18px] px-1 rounded-full bg-red-500 ring-2 ring-black/60 text-2xs font-bold flex items-center justify-center">
           {badge > 9 ? "9+" : badge}
         </span>
       )}
