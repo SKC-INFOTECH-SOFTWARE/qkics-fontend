@@ -258,26 +258,31 @@ export default function MyBookings() {
                   {/* ACTION */}
                   {canJoin && (
                     <div className="mt-auto">
-                      {now >= startDate ? (
-                        isVideo ? (
-                          <Button
-                            fullWidth
-                            onClick={() => booking.call_room_id ? navigate(`/video-call/${booking.call_room_id}`) : showAlert("Video room not ready yet", "info")}
-                          >
-                            <MdVideocam size={18} /> Start Video Call
-                          </Button>
-                        ) : (
-                          <Button
-                            fullWidth
-                            onClick={() => navigate(booking.chat_room_id ? `/chat/${booking.chat_room_id}` : '/chat')}
-                          >
-                            <MdChatBubbleOutline size={18} /> {booking.session_type === "CHAT" ? "Start Chat" : "Open Chat"}
-                          </Button>
-                        )
-                      ) : (
+                      {now < startDate ? (
+                        // Not started yet
                         <Button fullWidth variant="secondary" disabled>
                           <MdOutlineSchedule size={18} />
                           Starts at {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Button>
+                      ) : now > endDate ? (
+                        // Session time is over — disable start buttons
+                        <Button fullWidth variant="secondary" disabled>
+                          <MdOutlineTimer size={18} />
+                          Session Ended
+                        </Button>
+                      ) : isVideo ? (
+                        <Button
+                          fullWidth
+                          onClick={() => booking.call_room_id ? navigate(`/video-call/${booking.call_room_id}`) : showAlert("Video room not ready yet", "info")}
+                        >
+                          <MdVideocam size={18} /> Start Video Call
+                        </Button>
+                      ) : (
+                        <Button
+                          fullWidth
+                          onClick={() => navigate(booking.chat_room_id ? `/chat/${booking.chat_room_id}` : '/chat')}
+                        >
+                          <MdChatBubbleOutline size={18} /> {booking.session_type === "CHAT" ? "Start Chat" : "Open Chat"}
                         </Button>
                       )}
                     </div>
