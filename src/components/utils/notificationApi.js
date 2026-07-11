@@ -1,69 +1,33 @@
 // src/components/utils/notificationApi.js
 //
-// Direct REST client for the external notification microservice.
-// Auth is a static service key sent as `x-api-key` on every request
-// (no JWT here — this talks to notification.mesmi.co.in, not our Django API).
-// WebSocket/real-time is intentionally skipped; the inbox refreshes on
-// screen open / manual refresh / background polling (see NotificationContext).
+// In-app notification client.
+//
+// NOTE: the browser CANNOT call the notification microservice directly —
+// that service does not send CORS headers, so every browser request is
+// blocked. Instead we go through our own Django API (same-origin, JWT-auth),
+// which proxies to the service server-side and attaches the x-api-key.
+// The service API key therefore never ships to the browser.
 
-import axios from "axios";
-
-const BASE_URL =
-  import.meta.env.VITE_NOTIFICATION_URL || "https://notification.mesmi.co.in";
-const API_KEY =
-  import.meta.env.VITE_NOTIFICATION_API_KEY ||
-  "ns_skc_d81ae6b063768ddb8b4d553c922d71fe6f68c6bb";
-
-const notificationApi = axios.create({
-  baseURL: `${BASE_URL}/api`,
-  headers: {
-    "x-api-key": API_KEY,
-    "Content-Type": "application/json",
-  },
-});
+import axiosSecure from "./axiosSecure";
 
 /* ---------------------------------------------------------------
-   1. GET a user's notifications (inbox / bell list)
-   Response: { data: { notifications[], total, unreadCount } }
+   GET the logged-in user's notifications (inbox / bell list).
+   Django resolves the user from the JWT, so no userId is needed.
+   Response: { success, data: { notifications[], total, unreadCount } }
 --------------------------------------------------------------- */
 export const getNotifications = ({
-  userId,
   limit = 20,
   offset = 0,
   channel = "IN_APP",
   status,
 } = {}) =>
-  notificationApi.get("/notifications", {
-    params: { userId, limit, offset, channel, ...(status ? { status } : {}) },
+  axiosSecure.get("/v1/notifications/inbox/", {
+    params: { limit, offset, channel, ...(status ? { status } : {}) },
   });
 
 /* ---------------------------------------------------------------
-   2. Mark one notification as read.
-   `id` MUST be the "_id" from the GET list response.
+   Mark one notification as read.
+   `id` is the service "_id" from the inbox list.
 --------------------------------------------------------------- */
 export const markNotificationRead = (id) =>
-  notificationApi.patch(`/notifications/${id}/read`);
-
-/* ---------------------------------------------------------------
-   3. Register a push (FCM) token — call after login.
---------------------------------------------------------------- */
-export const registerPushToken = ({
-  userId,
-  token,
-  platform = "web",
-  deviceId,
-}) =>
-  notificationApi.post("/push-tokens/register", {
-    userId: String(userId),
-    token,
-    platform,
-    ...(deviceId ? { deviceId } : {}),
-  });
-
-/* ---------------------------------------------------------------
-   4. Unregister a push token — call on logout.
---------------------------------------------------------------- */
-export const unregisterPushToken = (token) =>
-  notificationApi.post("/push-tokens/unregister", { token });
-
-export default notificationApi;
+  axiosSecure.patch(`/v1/notifications/inbox/${id}/read/`);

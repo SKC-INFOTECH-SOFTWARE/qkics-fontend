@@ -33,18 +33,20 @@ export const NotificationProvider = ({ children }) => {
 
         try {
             const res = await getNotifications({
-                userId,
                 channel: "IN_APP",
                 limit: 20,
                 offset: 0,
             });
 
-            // API returns { data: { notifications, unreadCount, total } }
+            // Proxy returns { success, data: { notifications, unreadCount, total } }.
+            // On upstream failure `data` is null — keep the current state instead
+            // of wiping the list/badge to zero.
             const data = res.data?.data;
-
-            setNotifications(Array.isArray(data?.notifications) ? data.notifications : []);
-            setUnreadCount(data?.unreadCount || 0);
-            setTotalCount(data?.total || 0);
+            if (data) {
+                setNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+                setUnreadCount(data.unreadCount || 0);
+                setTotalCount(data.total || 0);
+            }
         } catch (err) {
             console.error("Failed to fetch notifications:", err);
         } finally {
@@ -59,14 +61,15 @@ export const NotificationProvider = ({ children }) => {
         if (!userId) return;
         try {
             const res = await getNotifications({
-                userId,
                 channel: "IN_APP",
                 limit: 1,
                 offset: 0,
             });
             const data = res.data?.data;
-            setUnreadCount(data?.unreadCount || 0);
-            setTotalCount(data?.total || 0);
+            if (data) {
+                setUnreadCount(data.unreadCount || 0);
+                setTotalCount(data.total || 0);
+            }
         } catch {
             /* silent — background badge poll */
         }
