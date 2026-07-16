@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineSchedule, MdPerson, MdOutlinePayments, MdChatBubbleOutline, MdOutlineTimer, MdVideocam, MdGroups } from "react-icons/md";
@@ -12,10 +12,14 @@ export default function MyBookings() {
   const navigate = useNavigate();
   const { showAlert } = useAlert();
 
-  const [bookings, setBookings] = useState([]);
+  // Can this user host sessions? (experts/investors create slots others book)
+  const canHost = user?.user_type === "expert" || user?.user_type === "investor";
+
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("expert");
+  // "sessions" = slots I host  |  "bookings" = sessions I booked as a client
+  const [activeTab, setActiveTab] = useState(canHost ? "sessions" : "bookings");
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -23,63 +27,73 @@ export default function MyBookings() {
     return () => clearInterval(timer);
   }, []);
 
-  /* ---------------- FETCH BOOKINGS ---------------- */
   useEffect(() => {
     if (!user) return;
-    fetchBookings();
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, activeTab]);
 
-  const fetchBookings = async () => {
+  const asList = (res) => (Array.isArray(res.data) ? res.data : (res.data?.results || []));
+
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError("");
 
-      let combinedData = [];
-
-      if (activeTab === "expert") {
+      if (activeTab === "sessions") {
+        // Slots I host (conducting). Group batch bookings into one card per slot.
+        let conducting = [];
         if (user.user_type === "expert") {
-          const [resExp, resCli] = await Promise.all([
-            axiosSecure.get("/v1/bookings/?as_expert=true"),
-            axiosSecure.get("/v1/bookings/")
-          ]);
-          const conducting = (Array.isArray(resExp.data) ? resExp.data : (resExp.data?.results || [])).map(b => ({ ...b, _role: "conducting" }));
-          const attending = (Array.isArray(resCli.data) ? resCli.data : (resCli.data?.results || [])).map(b => ({ ...b, _role: "attending" }));
-          combinedData = [...conducting, ...attending];
-        } else {
-          const res = await axiosSecure.get("/v1/bookings/");
-          combinedData = (Array.isArray(res.data) ? res.data : (res.data?.results || [])).map(b => ({ ...b, _role: "attending" }));
+          conducting = asList(await axiosSecure.get("/v1/bookings/?as_expert=true"));
+        } else if (user.user_type === "investor") {
+          conducting = asList(await axiosSecure.get("/v1/bookings/investor-bookings/list/?as_investor=true"));
         }
+        setItems(buildSessionCards(conducting));
       } else {
-        if (user.user_type === "investor") {
-          const [resInv, resCli] = await Promise.all([
-            axiosSecure.get("/v1/bookings/investor-bookings/list/?as_investor=true"),
-            axiosSecure.get("/v1/bookings/investor-bookings/list/")
-          ]);
-          const conducting = (Array.isArray(resInv.data) ? resInv.data : (resInv.data?.results || [])).map(b => ({ ...b, _role: "conducting" }));
-          const attending = (Array.isArray(resCli.data) ? resCli.data : (resCli.data?.results || [])).map(b => ({ ...b, _role: "attending" }));
-          combinedData = [...conducting, ...attending];
-        } else {
-          const res = await axiosSecure.get("/v1/bookings/investor-bookings/list/");
-          combinedData = (Array.isArray(res.data) ? res.data : (res.data?.results || [])).map(b => ({ ...b, _role: "attending" }));
-        }
+        // Sessions I booked with others (attending) — expert + investor.
+        const [resExp, resInv] = await Promise.all([
+          axiosSecure.get("/v1/bookings/").catch(() => ({ data: [] })),
+          axiosSecure.get("/v1/bookings/investor-bookings/list/").catch(() => ({ data: [] })),
+        ]);
+        const experts = asList(resExp).map((b) => ({ ...b, _providerType: "expert" }));
+        const investors = asList(resInv).map((b) => ({ ...b, _providerType: "investor" }));
+        const map = new Map();
+        [...experts, ...investors].forEach((b) => { if (!map.has(b.uuid)) map.set(b.uuid, b); });
+        const sorted = Array.from(map.values()).sort(
+          (a, b) => new Date(b.start_datetime) - new Date(a.start_datetime)
+        );
+        setItems(sorted);
       }
-
-      const uniqueMap = new Map();
-      combinedData.forEach(item => {
-        if (!uniqueMap.has(item.uuid)) {
-          uniqueMap.set(item.uuid, item);
-        }
-      });
-
-      const sorted = Array.from(uniqueMap.values()).sort((a, b) => new Date(b.start_datetime) - new Date(a.start_datetime));
-      setBookings(sorted);
     } catch (err) {
       console.error(err);
-      setError("Failed to load bookings");
-      showAlert("Failed to load bookings", "error");
+      setError("Failed to load");
+      showAlert("Failed to load", "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  /* Collapse batch bookings on the same slot into ONE card + participant names. */
+  const buildSessionCards = (conducting) => {
+    const cards = [];
+    const groups = new Map(); // slot_uuid -> group card
+
+    conducting.forEach((b) => {
+      if (b.is_batch && b.slot_uuid) {
+        if (!groups.has(b.slot_uuid)) {
+          groups.set(b.slot_uuid, { ...b, _group: true, participants: [] });
+        }
+        const g = groups.get(b.slot_uuid);
+        if (b.user_name) g.participants.push(b.user_name);
+        // Prefer a call_room_id from any booking that has one.
+        if (!g.call_room_id && b.call_room_id) g.call_room_id = b.call_room_id;
+      } else {
+        cards.push({ ...b, _group: false });
+      }
+    });
+
+    const all = [...cards, ...groups.values()];
+    return all.sort((a, b) => new Date(b.start_datetime) - new Date(a.start_datetime));
   };
 
   /* ---------------- STATUS CONFIG ---------------- */
@@ -106,6 +120,13 @@ export default function MyBookings() {
     }
   };
 
+  const tabs = useMemo(() => {
+    const t = [];
+    if (canHost) t.push({ key: "sessions", label: "My Sessions" });
+    t.push({ key: "bookings", label: "My Bookings" });
+    return t;
+  }, [canHost]);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-12">
@@ -113,102 +134,117 @@ export default function MyBookings() {
         {/* HEADER */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <Breadcrumb items={[{ label: "My Bookings" }]} />
+            <Breadcrumb items={[{ label: activeTab === "sessions" ? "My Sessions" : "My Bookings" }]} />
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-              My <span className="text-primary">Bookings</span>
+              {activeTab === "sessions" ? (
+                <>My <span className="text-primary">Sessions</span></>
+              ) : (
+                <>My <span className="text-primary">Bookings</span></>
+              )}
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Track and manage your scheduled consultation sessions.
+              {activeTab === "sessions"
+                ? "Slots you host. Join your scheduled sessions here."
+                : "Sessions you booked with experts and investors."}
             </p>
           </div>
           <div className="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-border bg-card px-4 py-2.5">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
             <span className="text-2xs font-bold uppercase tracking-wide text-muted-foreground">
-              {bookings.length} session{bookings.length === 1 ? "" : "s"}
+              {items.length} {activeTab === "sessions" ? "session" : "booking"}{items.length === 1 ? "" : "s"}
             </span>
           </div>
         </div>
 
-        {/* TABS */}
-        <div className="mb-6 flex gap-1 overflow-x-auto border-b border-border no-scrollbar">
-          {[
-            { key: "expert", label: "Expert Sessions" },
-            { key: "investor", label: "Investor Sessions" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`whitespace-nowrap border-b-2 px-5 py-3 text-sm font-semibold transition-all ${activeTab === tab.key
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* TABS (only shown when the user can host) */}
+        {tabs.length > 1 && (
+          <div className="mb-6 flex gap-1 overflow-x-auto border-b border-border no-scrollbar">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`whitespace-nowrap border-b-2 px-5 py-3 text-sm font-semibold transition-all ${activeTab === tab.key
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex flex-col items-center justify-center gap-4 py-24">
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary" />
-            <span className="text-2xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Loading bookings...</span>
+            <span className="text-2xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Loading...</span>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center gap-5 rounded-2xl border border-border bg-card py-20 text-center">
             <p className="text-sm font-bold text-danger">{error}</p>
-            <Button onClick={fetchBookings}>Retry</Button>
+            <Button onClick={fetchData}>Retry</Button>
           </div>
-        ) : bookings.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border py-24 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
               <MdOutlineSchedule size={30} />
             </div>
-            <h3 className="text-base font-bold text-foreground">No bookings yet</h3>
-            <p className="text-sm text-muted-foreground">Book a session to get started.</p>
+            <h3 className="text-base font-bold text-foreground">
+              {activeTab === "sessions" ? "No sessions yet" : "No bookings yet"}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {activeTab === "sessions"
+                ? "Create a slot so people can book you."
+                : "Book a session to get started."}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {bookings.map((booking) => {
+            {items.map((booking) => {
               const status = getStatusConfig(booking);
               const startDate = new Date(booking.start_datetime);
               const endDate = new Date(booking.end_datetime);
               const durationMins = booking.duration_minutes || Math.floor((endDate - startDate) / 60000);
               const isBatch = Boolean(booking.is_batch);
-              const isVideo = booking.session_type === "VIDEO_CALL";
+              const isVideo = booking.session_type === "VIDEO_CALL" || isBatch;
+              const isGroupCard = Boolean(booking._group);
 
-              let otherPersonName = "";
-              if (activeTab === "expert") {
-                otherPersonName = booking._role === "conducting" ? booking.user_name : booking.expert_name;
+              // Who is shown as the "other party" on this card.
+              let title;
+              if (activeTab === "sessions") {
+                title = isGroupCard
+                  ? `${booking.participants.length} participant${booking.participants.length === 1 ? "" : "s"}`
+                  : booking.user_name;
               } else {
-                otherPersonName = booking._role === "conducting" ? booking.user_name : booking.investor_name;
+                title = booking.expert_name || booking.investor_name;
               }
 
               const canJoin = booking.chat_room_id || booking.call_room_id || ['CONFIRMED', 'PAID', 'COMPLETED'].includes(status.label);
+              const key = isGroupCard ? `grp-${booking.slot_uuid}` : booking.uuid;
 
               return (
                 <div
-                  key={booking.uuid}
+                  key={key}
                   className="group flex flex-col rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
                 >
                   {/* HEADER */}
                   <div className="flex items-center gap-2.5">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground">
-                      <MdPerson size={20} />
+                      {isGroupCard ? <MdGroups size={20} /> : <MdPerson size={20} />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="truncate text-sm font-bold text-foreground">{otherPersonName}</h4>
+                      <h4 className="truncate text-sm font-bold text-foreground">{title}</h4>
                       <div className="mt-1 flex flex-wrap items-center gap-1">
                         <span className={`rounded-full border px-2 py-0.5 text-3xs font-bold uppercase tracking-wide ${status.color}`}>
                           {status.label}
                         </span>
-                        {booking._role === "attending" && (
+                        {activeTab === "sessions" ? (
+                          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-3xs font-bold uppercase tracking-wide text-muted-foreground">
+                            Hosting
+                          </span>
+                        ) : (
                           <span className="rounded-full border border-primary/20 bg-primary-soft px-2 py-0.5 text-3xs font-bold uppercase tracking-wide text-primary">
                             My Booking
-                          </span>
-                        )}
-                        {booking._role === "conducting" && (
-                          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-3xs font-bold uppercase tracking-wide text-muted-foreground">
-                            My Session
                           </span>
                         )}
                       </div>
@@ -219,7 +255,23 @@ export default function MyBookings() {
                     </div>
                   </div>
 
-                  {/* DETAILS — schedule + duration + fee in one compact box */}
+                  {/* PARTICIPANT NAMES (group session card only) */}
+                  {isGroupCard && booking.participants.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {booking.participants.slice(0, 6).map((name, i) => (
+                        <span key={i} className="rounded-md bg-muted px-2 py-0.5 text-2xs font-semibold text-foreground">
+                          {name}
+                        </span>
+                      ))}
+                      {booking.participants.length > 6 && (
+                        <span className="rounded-md bg-muted px-2 py-0.5 text-2xs font-semibold text-muted-foreground">
+                          +{booking.participants.length - 6} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* DETAILS — schedule + duration + fee */}
                   <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
                     <div className="flex items-center gap-2">
                       <MdOutlineSchedule size={15} className="shrink-0 text-primary" />
@@ -237,7 +289,9 @@ export default function MyBookings() {
                       </span>
                       <span className="ml-auto flex items-center gap-1.5 text-muted-foreground">
                         <MdOutlinePayments size={14} className="text-primary" />
-                        <span className="font-bold text-foreground">{booking.price !== undefined ? `₹${booking.price}` : "Free"}</span>
+                        <span className="font-bold text-foreground">
+                          {booking.price !== undefined ? `₹${booking.price}` : "Free"}{isBatch && activeTab === "sessions" ? " / seat" : ""}
+                        </span>
                       </span>
                     </div>
                   </div>
@@ -246,13 +300,11 @@ export default function MyBookings() {
                   {canJoin && (
                     <div className="mt-3">
                       {now < startDate ? (
-                        // Not started yet
                         <Button fullWidth size="sm" variant="secondary" disabled>
                           <MdOutlineSchedule size={16} />
                           Starts at {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </Button>
                       ) : now > endDate ? (
-                        // Session time is over — disable start buttons
                         <Button fullWidth size="sm" variant="secondary" disabled>
                           <MdOutlineTimer size={16} />
                           Session Ended
