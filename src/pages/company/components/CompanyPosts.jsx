@@ -107,7 +107,7 @@ export default function CompanyPosts({ companyId, showCreate = true }) {
       setContent("");
       setFiles([]);
       setPreviews([]);
-      showAlert("Post created successfully!", "success");
+      showAlert("Position posted successfully!", "success");
     } catch (err) {
       console.error("Error creating post:", err);
       showAlert(err.response?.data?.message || "Error creating post", "error");
@@ -153,7 +153,7 @@ export default function CompanyPosts({ companyId, showCreate = true }) {
       setContent("");
       setFiles([]);
       setPreviews([]);
-      showAlert("Post updated successfully!", "success");
+      showAlert("Position updated successfully!", "success");
     } catch (err) {
       console.error("Error updating post:", err);
       showAlert(err.response?.data?.message || "Error updating post", "error");
@@ -182,7 +182,7 @@ export default function CompanyPosts({ companyId, showCreate = true }) {
     try {
       await axiosSecure.delete(`/v1/companies/posts/${postIdToDelete}/delete/`);
       setPosts((prev) => prev.filter((p) => p.id !== postIdToDelete));
-      showAlert("Post deleted successfully!", "success");
+      showAlert("Position deleted successfully!", "success");
     } catch (err) {
       console.error("Error deleting post:", err);
       showAlert(err.response?.data?.message || "Error deleting post", "error");
@@ -195,10 +195,10 @@ export default function CompanyPosts({ companyId, showCreate = true }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold tracking-tight text-foreground">Company Posts</h2>
+        <h2 className="text-base font-bold tracking-tight text-foreground">Open Positions</h2>
         {showCreate && (
           <Button size="sm" onClick={() => setShowCreateModal(true)}>
-            Create Post
+            Post a Position
           </Button>
         )}
       </div>
@@ -219,7 +219,7 @@ export default function CompanyPosts({ companyId, showCreate = true }) {
         ) : (
           !loading && (
             <div className="rounded-2xl border border-dashed border-border py-12 text-center text-sm italic text-muted-foreground">
-              No posts found for this company.
+              No open positions yet.
             </div>
           )
         )}
@@ -237,10 +237,10 @@ export default function CompanyPosts({ companyId, showCreate = true }) {
             <div className="mb-6 flex items-start justify-between">
               <div>
                 <h2 className="text-lg font-bold tracking-tight text-foreground">
-                  {isEditing ? "Edit Post" : "Create New Post"}
+                  {isEditing ? "Edit Position" : "Post a Position"}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {isEditing ? "Update your post title and content." : "Share updates, news, or articles from your company."}
+                  {isEditing ? "Update this position's title and details." : "Share an open role or position at your company."}
                 </p>
               </div>
               <button
@@ -253,14 +253,14 @@ export default function CompanyPosts({ companyId, showCreate = true }) {
 
             <form onSubmit={isEditing ? handleUpdatePost : handleCreatePost} className="space-y-4">
               <div>
-                <label className={labelClass}>Post Title *</label>
+                <label className={labelClass}>Position Title *</label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className={fieldClass}
-                  placeholder="Enter post title"
+                  placeholder="e.g. Senior Backend Engineer"
                 />
               </div>
 
@@ -272,7 +272,7 @@ export default function CompanyPosts({ companyId, showCreate = true }) {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   className={`${fieldClass} resize-none`}
-                  placeholder="What's on your mind?..."
+                  placeholder="Describe the role, responsibilities and requirements…"
                 />
               </div>
 

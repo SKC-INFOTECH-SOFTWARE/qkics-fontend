@@ -1,16 +1,24 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { 
-  FaBuilding, FaMapMarkerAlt, FaGlobe, FaBriefcase, 
-  FaArrowLeft, FaEdit, FaPlus, FaCheck, FaTimes 
+import {
+  FaBuilding, FaMapMarkerAlt, FaGlobe, FaBriefcase, FaArrowLeft,
+  FaEdit, FaPlus, FaCheck, FaTimes, FaRegBuilding, FaBullhorn,
 } from "react-icons/fa";
 import axiosSecure from "../../components/utils/axiosSecure";
 import { resolveMedia } from "../../components/utils/mediaUrl";
 import CompanyPosts from "./components/CompanyPosts";
 import CompanyMembers from "./components/CompanyMembers";
 import SponsorCard from "../../components/ui/SponsorCard";
+import { Button } from "../../components/ui";
 import { useAlert } from "../../context/AlertContext";
+
+const STATUS_STYLES = {
+  approved: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  pending: "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  rejected: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400",
+  suspended: "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400",
+};
 
 export default function PublicCompanyProfile() {
   const { slug } = useParams();
@@ -23,15 +31,8 @@ export default function PublicCompanyProfile() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("about");
   const [editMode, setEditMode] = useState(false);
-  
-  // Form State for Editing
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    industry: "",
-    website: "",
-    location: "",
-  });
+
+  const [formData, setFormData] = useState({ name: "", description: "", industry: "", website: "", location: "" });
   const [logoFile, setLogoFile] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
@@ -40,13 +41,9 @@ export default function PublicCompanyProfile() {
   const fetchCompanyProfile = async () => {
     try {
       setLoading(true);
-      console.log("[CompanyProfile] Fetching details for identifier:", slug);
-      // Using relative path to honor baseURL (/api)
       const res = await axiosSecure.get(`/v1/companies/${slug}/`);
-      console.log("[CompanyProfile] Data received:", res.data);
       const data = res.data;
       setCompany(data);
-      
       setFormData({
         name: data.name || "",
         description: data.description || "",
@@ -67,47 +64,32 @@ export default function PublicCompanyProfile() {
       fetchCompanyProfile();
       setEditMode(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
-  /* ----------------------------
-      PERMISSION CHECK
-  ----------------------------- */
+  /* PERMISSIONS */
   const { isOwner, isMember } = (() => {
     if (!company || !loggedUser) return { isOwner: false, isMember: false };
-
-    const currentUsername = loggedUser.username;
-    const currentUuid = loggedUser.uuid;
-
-    // 1. Check Owner
+    const { username, uuid } = loggedUser;
     let ownerFlag = false;
     const owner = company.owner;
-    if (typeof owner === 'object' && owner !== null) {
-      ownerFlag = (owner.uuid === currentUuid || owner.username === currentUsername);
-    } else if (typeof owner === 'string') {
-      // Handles both UUID string and "username (type)" string
-      ownerFlag = (owner === currentUuid || owner === currentUsername || owner.split(" ")[0] === currentUsername);
+    if (typeof owner === "object" && owner !== null) {
+      ownerFlag = owner.uuid === uuid || owner.username === username;
+    } else if (typeof owner === "string") {
+      ownerFlag = owner === uuid || owner === username || owner.split(" ")[0] === username;
     }
-
-    // 2. Check Members List
-    const memberFlag = (company.members || []).some(m => {
+    const memberFlag = (company.members || []).some((m) => {
       const u = m.user;
-      if (typeof u === 'object' && u !== null) {
-        return u.uuid === currentUuid || u.username === currentUsername;
-      }
-      if (typeof u === 'string') {
-        return u === currentUuid || u === currentUsername || u.split(" ")[0] === currentUsername;
-      }
+      if (typeof u === "object" && u !== null) return u.uuid === uuid || u.username === username;
+      if (typeof u === "string") return u === uuid || u === username || u.split(" ")[0] === username;
       return false;
     });
-
     return { isOwner: ownerFlag, isMember: memberFlag };
   })();
 
   const canManage = isOwner || isMember;
 
-  /* ----------------------------
-      EDIT HANDLERS
-  ----------------------------- */
+  /* EDIT HANDLERS */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -115,37 +97,27 @@ export default function PublicCompanyProfile() {
 
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
-    if (file) {
-      if (type === "logo") {
-        setLogoFile(file);
-        setLogoPreview(URL.createObjectURL(file));
-      } else {
-        setCoverFile(file);
-        setCoverPreview(URL.createObjectURL(file));
-      }
-    }
+    if (!file) return;
+    if (type === "logo") { setLogoFile(file); setLogoPreview(URL.createObjectURL(file)); }
+    else { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     const submitData = new FormData();
-    Object.keys(formData).forEach(key => submitData.append(key, formData[key]));
+    Object.keys(formData).forEach((k) => submitData.append(k, formData[k]));
     if (logoFile) submitData.append("logo", logoFile);
     if (coverFile) submitData.append("cover_image", coverFile);
-
     try {
       const res = await axiosSecure.patch(`/v1/companies/${company.id}/update/`, submitData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setCompany(res.data);
       setEditMode(false);
+      setLogoPreview(null); setCoverPreview(null); setLogoFile(null); setCoverFile(null);
       showAlert("Company updated successfully!", "success");
-      // If slug changed, navigate to new URL
-      if (res.data.slug !== slug) {
-        navigate(`/company/${res.data.slug}`, { replace: true });
-      }
+      if (res.data.slug !== slug) navigate(`/company/${res.data.slug}`, { replace: true });
     } catch (err) {
       console.error("Update failed:", err);
       showAlert("Failed to update company info", "error");
@@ -154,304 +126,327 @@ export default function PublicCompanyProfile() {
     }
   };
 
+  /* LOADING */
   if (loading && !company) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? "bg-[#0a0a0a]" : "bg-[#f8f9fa]"}`}>
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-          <span className={`text-2xs font-black uppercase tracking-[0.3em] opacity-30 ${isDark ? "text-white" : "text-black"}`}>Syncing Organization Intelligence...</span>
+          <div className="h-11 w-11 animate-spin rounded-full border-2 border-muted border-t-primary" />
+          <span className="text-2xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Loading Company…</span>
         </div>
       </div>
     );
   }
 
+  /* NOT FOUND */
   if (!company) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? "bg-[#0a0a0a]" : "bg-[#f8f9fa]"}`}>
-        <div className="text-center px-6">
-            <div className="h-20 w-20 bg-red-600/10 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <FaBuilding size={40} />
-            </div>
-            <h1 className={`text-2xl font-black mb-2 ${isDark ? "text-white" : "text-black"}`}>Organization Not Found</h1>
-            <p className="text-xs opacity-50 uppercase font-bold tracking-widest mb-8 text-neutral-500">The requested entity could not be located in the network</p>
-            <button 
-                onClick={() => navigate("/company")}
-                className="flex items-center gap-3 mx-auto px-8 py-3 bg-red-600 text-white rounded-xl text-2xs font-black uppercase tracking-widest shadow-xl shadow-red-600/20 hover:scale-105 active:scale-95 transition-all"
-            >
-                <FaArrowLeft /> Return to Discovery
-            </button>
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div className="text-center">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary-soft text-primary">
+            <FaBuilding size={38} />
+          </div>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground">Company Not Found</h1>
+          <p className="mb-8 text-sm text-muted-foreground">We couldn't find the company you're looking for.</p>
+          <Button onClick={() => navigate("/company")}>
+            <FaArrowLeft /> Back to Companies
+          </Button>
         </div>
       </div>
     );
   }
 
-  const text = isDark ? "text-white" : "text-black";
-  const bgCard = isDark ? "bg-neutral-900" : "bg-white";
+  const website = company.website
+    ? (company.website.startsWith("http") ? company.website : `https://${company.website}`)
+    : null;
 
   return (
-    <div className={`min-h-screen px-4 py-8 md:px-8 ${isDark ? "bg-[#0a0a0a]" : "bg-[#f8f9fa]"}`}>
-      <div className="max-w-6xl mx-auto">
-        
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* MAIN COLUMN (LEFT) */}
-          <div className="lg:col-span-8">
-            {/* Mobile Header Controls */}
-            {isOwner && !editMode && (
-              <div className="lg:hidden flex justify-end items-center mb-6">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Back */}
+        <button
+          onClick={() => navigate("/company")}
+          className="mb-5 inline-flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <FaArrowLeft size={11} /> All Companies
+        </button>
+
+        {editMode ? (
+          <EditPanel
+            company={company} formData={formData} loading={loading}
+            logoPreview={logoPreview} coverPreview={coverPreview}
+            onInput={handleInputChange} onFile={handleFileChange} onSubmit={handleUpdate}
+            onCancel={() => { setEditMode(false); setLogoPreview(null); setCoverPreview(null); }}
+          />
+        ) : (
+          <>
+            {/* ── HERO ───────────────────────────────── */}
+            <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+              {/* Cover */}
+              <div className="relative h-40 md:h-56">
+                {company.cover_image ? (
+                  <img src={resolveMedia(company.cover_image)} alt="Cover" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="relative h-full w-full bg-gradient-to-br from-primary via-primary-hover to-primary/50">
+                    <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:20px_20px]" />
+                  </div>
+                )}
+                {isOwner && (
                   <button
                     onClick={() => setEditMode(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-2xs font-black uppercase tracking-widest shadow-lg shadow-red-600/20"
+                    className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-xl bg-card/90 px-4 py-2 text-2xs font-bold uppercase tracking-wide text-foreground shadow-lg backdrop-blur-sm transition-all hover:bg-card"
                   >
                     <FaEdit size={12} /> Edit
                   </button>
+                )}
               </div>
-            )}
 
-            {/* Desktop Edit Button - Floating above main column */}
-            {isOwner && !editMode && (
-              <div className="hidden lg:flex justify-end mb-4">
-                  <button
-                    onClick={() => setEditMode(true)}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-red-600 text-white rounded-xl text-2xs font-black uppercase tracking-widest shadow-lg shadow-red-600/20 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    <FaEdit size={14} />
-                    Edit Profile
-                  </button>
-              </div>
-            )}
-
-            {editMode ? (
-              /* EDIT MODE CONTENT */
-              <div className={`overflow-hidden rounded-3xl shadow-xl ${bgCard} border ${isDark ? 'border-white/5' : 'border-black/5'}`}>
-                   <div className="p-8 md:p-12">
-                      <div className="flex justify-between items-center mb-10">
-                        <div>
-                           <h2 className={`text-3xl font-black tracking-tighter ${text}`}>Configuration</h2>
-                           <p className="text-2xs font-black uppercase tracking-widest opacity-40 mt-1">Identity & Branding Management</p>
-                        </div>
-                        <button onClick={() => { setEditMode(false); setLogoPreview(null); setCoverPreview(null); }} className="text-neutral-500 hover:text-red-500 transition-colors">
-                           <FaTimes size={20} />
-                        </button>
+              {/* Identity row */}
+              <div className="px-5 pb-6 md:px-8">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                  {/* Logo */}
+                  <div className="-mt-12 h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl bg-card ring-4 ring-card shadow-xl md:h-28 md:w-28">
+                    {company.logo ? (
+                      <img src={resolveMedia(company.logo)} alt="Logo" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
+                        <FaBuilding size={40} />
                       </div>
+                    )}
+                  </div>
 
-                      <form onSubmit={handleUpdate} className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-3">
-                               <label className="text-2xs font-black uppercase tracking-widest opacity-50">Logo Asset</label>
-                               <div className="flex items-center gap-4">
-                                  <div className="h-24 w-24 rounded-2xl border-2 border-dashed border-black/10 dark:border-white/10 overflow-hidden flex items-center justify-center bg-black/5 dark:bg-white/5">
-                                      {(logoPreview || company.logo) ? (
-                                        <img src={logoPreview || resolveMedia(company.logo)} className="h-full w-full object-cover" />
-                                      ) : <FaBuilding size={32} className="opacity-20" />}
-                                  </div>
-                                  <label className="px-6 py-2.5 bg-neutral-100 dark:bg-white/5 rounded-xl text-2xs font-black uppercase tracking-widest cursor-pointer hover:bg-red-600 hover:text-white transition-all">
-                                      Change Logo
-                                      <input type="file" className="hidden" accept="image/*" onChange={e => handleFileChange(e, 'logo')} />
-                                  </label>
-                               </div>
-                            </div>
-                            <div className="space-y-3">
-                               <label className="text-2xs font-black uppercase tracking-widest opacity-50">Cover Background</label>
-                               <div className="h-24 w-full rounded-2xl border-2 border-dashed border-black/10 dark:border-white/10 overflow-hidden relative group bg-black/5 dark:bg-white/5">
-                                  {(coverPreview || company.cover_image) ? (
-                                    <img src={coverPreview || resolveMedia(company.cover_image)} className="h-full w-full object-cover" />
-                                  ) : <div className="h-full w-full flex items-center justify-center"><FaPlus className="opacity-20" /></div>}
-                                  <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                      <span className="text-2xs font-black uppercase tracking-widest text-white">Upload Brand Cover</span>
-                                      <input type="file" className="hidden" accept="image/*" onChange={e => handleFileChange(e, 'cover')} />
-                                  </label>
-                               </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <input name="name" value={formData.name} onChange={handleInputChange} placeholder="Project Name" className={`w-full px-5 py-3.5 rounded-2xl border focus:border-red-500 outline-none transition-all font-bold ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`} />
-                            <input name="industry" value={formData.industry} onChange={handleInputChange} placeholder="Industry Sector" className={`w-full px-5 py-3.5 rounded-2xl border focus:border-red-500 outline-none transition-all font-bold ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`} />
-                            <input name="location" value={formData.location} onChange={handleInputChange} placeholder="Regional Location" className={`w-full px-5 py-3.5 rounded-2xl border focus:border-red-500 outline-none transition-all font-bold ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`} />
-                            <input name="website" value={formData.website} onChange={handleInputChange} placeholder="Operational URL" className={`w-full px-5 py-3.5 rounded-2xl border focus:border-red-500 outline-none transition-all font-bold ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`} />
-                        </div>
-
-                        <textarea name="description" value={formData.description} onChange={handleInputChange} rows="5" placeholder="Operational Description & Strategy" className={`w-full px-5 py-3.5 rounded-2xl border focus:border-red-500 outline-none transition-all font-bold resize-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`} />
-
-                        <div className="flex justify-end gap-4 pt-6 border-t border-black/5 dark:border-white/5">
-                            <button type="button" onClick={() => setEditMode(false)} className={`px-8 py-3 rounded-xl text-2xs font-black uppercase tracking-widest ${isDark ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-black/5 text-black hover:bg-black/10'}`}>
-                                Abandon Edits
-                            </button>
-                            <button type="submit" disabled={loading} className="px-8 py-3 bg-red-600 text-white rounded-xl text-2xs font-black uppercase tracking-widest shadow-xl shadow-red-600/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
-                                {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <FaCheck />}
-                                Update Intelligence
-                            </button>
-                        </div>
-                      </form>
-                   </div>
-              </div>
-            ) : (
-              /* VIEW MODE CONTENT */
-              <div className={`overflow-hidden rounded-3xl shadow-xl ${bgCard} shadow-black/10 transition-all border ${isDark ? 'border-white/5' : 'border-black/5'}`}>
-                {/* Cover Image Header */}
-                <div className="h-40 md:h-48 bg-neutral-200 dark:bg-neutral-800 relative">
-                  {company.cover_image ? (
-                    <img src={resolveMedia(company.cover_image)} alt="Cover" className="w-full h-full object-cover" />
-                  ) : (
-                      <div className="w-full h-full bg-gradient-to-r from-red-600/20 to-orange-600/20 flex items-center justify-center">
-                        <FaBuilding size={48} className="text-red-500/20" />
-                      </div>
-                  )}
-                </div>
-
-                {/* Profile Info Section */}
-                <div className="px-6 md:px-8 pb-8 relative">
-                  <div className="flex flex-col md:flex-row gap-6 items-start">
-                    
-                    {/* Logo */}
-                    <div className="-mt-10 w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-4 ring-white dark:ring-neutral-900 bg-white dark:bg-neutral-800 flex-shrink-0 shadow-xl relative z-10">
-                      {company.logo ? (
-                        <img src={resolveMedia(company.logo)} alt="Logo" className="w-full h-full object-cover bg-white" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
-                          <FaBuilding size={40} className="text-neutral-400" />
-                        </div>
+                  {/* Name + badges */}
+                  <div className="min-w-0 flex-1 sm:pb-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h1 className="truncate text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+                        {company.name}
+                      </h1>
+                      {company.status === "approved" && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-2xs font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                          <FaCheck size={9} /> Verified
+                        </span>
                       )}
                     </div>
-
-                    {/* Header Details */}
-                    <div className="flex-1 mt-4 w-full">
-                      <div className="flex flex-col md:flex-row justify-between items-start gap-2">
-                         <h1 className={`text-2xl md:text-3xl font-bold tracking-tight ${text}`}>
-                           {company.name}
-                         </h1>
-                         {company.status === 'approved' && (
-                           <div className="px-3 py-1 bg-green-500/10 text-green-500 rounded-lg text-2xs font-black uppercase tracking-tighter flex items-center gap-1 border border-green-500/10">
-                              <FaCheck size={8} /> Verified Organization
-                           </div>
-                         )}
-                      </div>
-                      <div className="flex flex-wrap gap-4 mt-2">
-                        {company.industry && (
-                          <div className={`flex items-center gap-1.5 text-xs font-bold ${isDark ? "text-red-400" : "text-red-600"}`}>
-                            <FaBriefcase size={12} />
-                            {company.industry}
-                          </div>
-                        )}
-                      </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-2xs font-bold uppercase tracking-wide text-muted-foreground">
+                        @{company.slug}
+                      </span>
+                      {company.industry && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-2xs font-bold uppercase tracking-wide text-primary">
+                          <FaBriefcase size={11} /> {company.industry}
+                        </span>
+                      )}
                     </div>
-                  </div>
-
-                  {/* TABS NAVIGATION */}
-                  <div className={`flex justify-center mt-8 mb-6 py-3 border-b border-black/5 dark:border-white/5`}>
-                    <div className={`inline-flex p-1 rounded-xl shadow-inner ${isDark ? "bg-white/5" : "bg-black/5"}`}>
-                      {['about', 'posts'].map((tab) => (
-                        <button
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          className={`px-8 py-2 rounded-lg text-2xs font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab
-                            ? "bg-red-600 text-white shadow-md shadow-red-600/30"
-                            : isDark ? "text-neutral-500 hover:text-white" : "text-neutral-500 hover:text-black"
-                            }`}
-                        >
-                          {tab}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* TAB CONTENT */}
-                  <div className="animate-fadeIn min-h-[300px]">
-                    {activeTab === "about" && (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="md:col-span-2 space-y-6">
-                          <div>
-                            <h3 className={`text-2xs font-black uppercase tracking-[0.2em] mb-4 ${isDark ? "text-neutral-500" : "text-neutral-400"}`}>
-                              Strategic Summary
-                            </h3>
-                            <div className={`prose max-w-none text-sm leading-relaxed ${isDark ? "text-neutral-300" : "text-neutral-700"}`}>
-                              {company.description ? (
-                                <p className="whitespace-pre-line">{company.description}</p>
-                              ) : (
-                                <p className="italic opacity-50">No strategic description logged in records.</p>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Contact Info */}
-                          {(company.location || company.website) && (
-                            <div className={`rounded-2xl border p-5 space-y-4 ${isDark ? "border-white/5 bg-neutral-900/50" : "border-black/5 bg-neutral-50/50"}`}>
-                              <h3 className={`text-2xs font-black uppercase tracking-[0.2em] ${isDark ? "text-neutral-500" : "text-neutral-400"}`}>
-                                Operational Coordinates
-                              </h3>
-                              {company.location && (
-                                <div className="flex items-center gap-2.5">
-                                  <FaMapMarkerAlt size={12} className="text-red-500" />
-                                  <span className={`text-xs font-bold ${isDark ? "text-neutral-300" : "text-neutral-700"}`}>{company.location}</span>
-                                </div>
-                              )}
-                              {company.website && (
-                                <div className="flex items-center gap-2.5">
-                                  <FaGlobe size={12} className="text-blue-500" />
-                                  <a
-                                    href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={`text-xs font-bold truncate hover:underline ${isDark ? "text-blue-400" : "text-blue-600"}`}
-                                  >
-                                    {company.website.replace(/^https?:\/\//, "")}
-                                  </a>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="md:col-span-1">
-                          <CompanyMembers 
-                            companyId={company.id} 
-                            isDark={isDark} 
-                            isOwner={isOwner} 
-                            text={text} 
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {activeTab === "posts" && (
-                      <div className="mt-2">
-                        {/* showCreate is only true if they are owner/member */}
-                        <CompanyPosts 
-                          companyId={company.id} 
-                          isDark={isDark} 
-                          showCreate={canManage} 
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
+
+                {/* Quick facts strip */}
+                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <FactTile icon={<FaBriefcase />} label="Industry" value={company.industry || "—"} />
+                  <FactTile icon={<FaMapMarkerAlt />} label="Location" value={company.location || "—"} />
+                  <FactTile
+                    icon={<FaGlobe />}
+                    label="Website"
+                    value={website ? company.website.replace(/^https?:\/\//, "") : "—"}
+                    href={website}
+                  />
+                  <FactTile
+                    icon={<FaRegBuilding />}
+                    label="Status"
+                    valueClass={STATUS_STYLES[company.status] ? "" : ""}
+                    value={
+                      <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-2xs font-bold uppercase tracking-wide ${STATUS_STYLES[company.status] || "border-border text-muted-foreground"}`}>
+                        {company.status || "Unverified"}
+                      </span>
+                    }
+                  />
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* SIDEBAR COLUMN (RIGHT) */}
-          <div className="lg:col-span-4 space-y-6">
-             <div className={`p-6 rounded-3xl border overflow-hidden relative ${isDark ? 'bg-gradient-to-br from-red-600/20 to-orange-600/20 border-white/5' : 'bg-gradient-to-br from-red-50 to-orange-50 border-black/5'}`}>
-                 <div className="relative z-10">
-                     <h3 className={`text-2xs font-black uppercase tracking-[0.2em] mb-2 ${isDark ? "text-red-400" : "text-red-600"}`}>Intelligence Dashboard</h3>
-                     <p className={`text-sm font-black opacity-60 uppercase tracking-widest ${text}`}>Verification Status: {company.status || "Unverified"}</p>
-                     <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10">
-                        <p className={`text-2xs opacity-40 uppercase font-black ${text}`}>Registry Entry ID</p>
-                        <p className={`text-2xs font-mono break-all opacity-60 ${text}`}>{company.id}</p>
-                     </div>
-                 </div>
-                 <FaBuilding size={80} className="absolute -right-4 -bottom-4 opacity-10 -rotate-12" />
             </div>
 
-            {/* SPONSOR/ADS SECTION */}
-            <div className="pt-2">
-                <SponsorCard isDark={isDark} />
+            {/* ── TABS ───────────────────────────────── */}
+            <div className="mt-6 flex justify-center">
+              <div className="inline-flex rounded-2xl border border-border bg-card p-1 shadow-sm">
+                {[
+                  { id: "about", label: "About", icon: <FaBuilding size={12} /> },
+                  { id: "positions", label: "Positions", icon: <FaBullhorn size={12} /> },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-2xs font-bold uppercase tracking-wide transition-all ${
+                      activeTab === tab.id
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {tab.icon} {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
+
+            {/* ── CONTENT ────────────────────────────── */}
+            <div className="mt-6 animate-fadeIn">
+              {activeTab === "about" && (
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                  <div className="space-y-6 lg:col-span-2">
+                    {/* About */}
+                    <section className="rounded-3xl border border-border bg-card p-6 shadow-sm md:p-8">
+                      <h3 className="mb-4 text-2xs font-bold uppercase tracking-[0.2em] text-muted-foreground">About</h3>
+                      {company.description ? (
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/80">{company.description}</p>
+                      ) : (
+                        <p className="text-sm italic text-muted-foreground">No description added yet.</p>
+                      )}
+                    </section>
+
+                    {/* Details */}
+                    {(company.location || website) && (
+                      <section className="rounded-3xl border border-border bg-card p-6 shadow-sm md:p-8">
+                        <h3 className="mb-4 text-2xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Details</h3>
+                        <div className="space-y-4">
+                          {company.location && (
+                            <DetailRow icon={<FaMapMarkerAlt />} label="Location" value={company.location} />
+                          )}
+                          {website && (
+                            <DetailRow
+                              icon={<FaGlobe />}
+                              label="Website"
+                              value={
+                                <a href={website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                  {company.website.replace(/^https?:\/\//, "")}
+                                </a>
+                              }
+                            />
+                          )}
+                          {company.industry && (
+                            <DetailRow icon={<FaBriefcase />} label="Industry" value={company.industry} />
+                          )}
+                        </div>
+                      </section>
+                    )}
+                  </div>
+
+                  {/* Sidebar */}
+                  <div className="space-y-6">
+                    <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                      <CompanyMembers
+                        companyId={company.id}
+                        isOwner={isOwner}
+                        onLeaveSuccess={fetchCompanyProfile}
+                      />
+                    </section>
+                    <SponsorCard isDark={isDark} />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "positions" && (
+                <div className="mx-auto max-w-3xl">
+                  <CompanyPosts companyId={company.id} showCreate={canManage} />
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
+/* ── Sub-components ──────────────────────────────── */
+
+function FactTile({ icon, label, value, href, valueClass = "" }) {
+  const inner = (
+    <div className="rounded-2xl border border-border bg-muted/40 p-3.5 transition-colors hover:bg-muted">
+      <div className="mb-1 flex items-center gap-1.5 text-primary">
+        <span className="text-xs">{icon}</span>
+        <span className="text-3xs font-bold uppercase tracking-[0.15em] text-muted-foreground">{label}</span>
+      </div>
+      <div className={`truncate text-sm font-bold text-foreground ${valueClass}`}>{value}</div>
+    </div>
+  );
+  return href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="block">{inner}</a>
+  ) : inner;
+}
+
+function DetailRow({ icon, label, value }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p className="text-3xs font-bold uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
+        <p className="truncate text-sm font-semibold text-foreground">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function EditPanel({ company, formData, loading, logoPreview, coverPreview, onInput, onFile, onSubmit, onCancel }) {
+  const field = "w-full rounded-xl border border-input bg-muted/40 px-4 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/40";
+  return (
+    <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+      <div className="p-6 md:p-8">
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">Edit Company</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Update your identity, branding and details.</p>
+          </div>
+          <button onClick={onCancel} className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            <FaTimes size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={onSubmit} className="space-y-7">
+          {/* Assets */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-2xs font-bold uppercase tracking-wide text-muted-foreground">Logo</label>
+              <div className="flex items-center gap-4">
+                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-muted/40">
+                  {(logoPreview || company.logo) ? (
+                    <img src={logoPreview || resolveMedia(company.logo)} alt="" className="h-full w-full object-cover" />
+                  ) : <FaBuilding size={30} className="text-muted-foreground" />}
+                </div>
+                <label className="cursor-pointer rounded-xl bg-muted px-5 py-2.5 text-2xs font-bold uppercase tracking-wide text-foreground transition-all hover:bg-primary hover:text-primary-foreground">
+                  Change Logo
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => onFile(e, "logo")} />
+                </label>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-2xs font-bold uppercase tracking-wide text-muted-foreground">Cover</label>
+              <div className="group relative h-24 w-full overflow-hidden rounded-2xl border-2 border-dashed border-border bg-muted/40">
+                {(coverPreview || company.cover_image) ? (
+                  <img src={coverPreview || resolveMedia(company.cover_image)} alt="" className="h-full w-full object-cover" />
+                ) : <div className="flex h-full w-full items-center justify-center text-muted-foreground"><FaPlus /></div>}
+                <label className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="text-2xs font-bold uppercase tracking-wide text-white">Upload Cover</span>
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => onFile(e, "cover")} />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <input name="name" value={formData.name} onChange={onInput} placeholder="Company name" className={field} />
+            <input name="industry" value={formData.industry} onChange={onInput} placeholder="Industry" className={field} />
+            <input name="location" value={formData.location} onChange={onInput} placeholder="Location" className={field} />
+            <input name="website" value={formData.website} onChange={onInput} placeholder="Website URL" className={field} />
+          </div>
+
+          <textarea name="description" value={formData.description} onChange={onInput} rows="5" placeholder="Describe your company…" className={`${field} resize-none`} />
+
+          <div className="flex justify-end gap-3 border-t border-border pt-6">
+            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button type="submit" loading={loading}><FaCheck /> Save Changes</Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

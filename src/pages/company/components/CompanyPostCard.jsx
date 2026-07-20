@@ -81,7 +81,7 @@ export default function CompanyPostCard({ post, onDelete, onEdit, isOwner }) {
                                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-2xs font-bold uppercase tracking-wide text-foreground transition-all hover:bg-muted"
                                 >
                                     <HiPencilAlt size={16} className="text-primary" />
-                                    Edit Post
+                                    Edit Position
                                 </button>
                                 <button
                                     onClick={() => {
@@ -91,7 +91,7 @@ export default function CompanyPostCard({ post, onDelete, onEdit, isOwner }) {
                                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-2xs font-bold uppercase tracking-wide text-danger transition-all hover:bg-danger/10"
                                 >
                                     <HiTrash size={16} />
-                                    Delete Post
+                                    Delete Position
                                 </button>
                             </div>
                         )}
