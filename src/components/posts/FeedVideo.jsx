@@ -19,12 +19,20 @@ let activeVideo = null;
 // inner container (profile page posts column). Falls back to the viewport.
 function getScrollParent(node) {
   let el = node?.parentElement;
-  while (el) {
+  while (el && el !== document.body && el !== document.documentElement) {
     const oy = getComputedStyle(el).overflowY;
-    if (oy === "auto" || oy === "scroll" || oy === "overlay") return el;
+    // Must both allow scrolling AND actually be scrollable. (Note: a `body`
+    // with `overflow-x: hidden` computes overflow-y to `auto`, so we skip
+    // body/html and fall back to the viewport for window-scrolled feeds.)
+    if (
+      (oy === "auto" || oy === "scroll" || oy === "overlay") &&
+      el.scrollHeight > el.clientHeight
+    ) {
+      return el;
+    }
     el = el.parentElement;
   }
-  return null;
+  return null; // viewport / window scroll
 }
 
 export default function FeedVideo({ src, className, poster }) {
