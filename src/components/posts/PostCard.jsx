@@ -8,6 +8,7 @@ import UserBadge from "../ui/UserBadge";
 import { useAlert } from "../../context/AlertContext";
 import useClickOutside from "../hooks/useClickOutside";
 import { resolveAvatar } from "../utils/mediaUrl";
+import FeedVideo from "./FeedVideo";
 
 const timeAgo = (dateString) => {
     const now = new Date();
@@ -257,11 +258,9 @@ export default function PostCard({
                             )}
 
                             {post.media[currentMediaIndex].media_type === "video" ? (
-                                <video
+                                <FeedVideo
                                     src={post.media[currentMediaIndex].file}
-                                    controls
                                     className="relative z-10 w-full h-full block max-h-[500px] object-contain bg-black"
-                                    onClick={(e) => e.stopPropagation()}
                                 />
                             ) : (
                                 <img
