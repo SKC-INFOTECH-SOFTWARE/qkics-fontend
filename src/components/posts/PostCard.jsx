@@ -237,7 +237,7 @@ export default function PostCard({
 
                 {/* MEDIA */}
                 {post.media && post.media.length > 0 ? (
-                    <div className="relative mt-3 overflow-hidden rounded-2xl group bg-muted flex items-center justify-center min-h-[300px] max-h-[500px]">
+                    <div className="relative mt-3 -mx-4 sm:-mx-6 overflow-hidden group bg-muted flex items-center justify-center min-h-[300px] max-h-[500px]">
                         {/* Page Indicator Top Right */}
                         {post.media.length > 1 && (
                             <div className="absolute top-4 right-4 z-30 bg-black/60 text-white text-2xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md">
@@ -296,7 +296,7 @@ export default function PostCard({
                     </div>
                 ) : post.image && (
                     <div
-                        className="mt-3 overflow-hidden rounded-2xl group relative cursor-zoom-in bg-muted flex items-center justify-center"
+                        className="mt-3 -mx-4 sm:-mx-6 overflow-hidden group relative cursor-zoom-in bg-muted flex items-center justify-center"
                         onClick={() => onImageClick?.(post.image)}
                     >
                         <div
