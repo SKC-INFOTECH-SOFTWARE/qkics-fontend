@@ -124,6 +124,7 @@ export default function UserPosts() {
               key={post.id}
               post={{ ...post, author: post.author || profileUser }}
               loggedUser={loggedUser}
+              videoFeedUser={post.author?.username || profileUser.username}
               onLike={(id) => handleLike(id)}
               onDelete={internalHandleDelete}
               onEdit={(p) => {

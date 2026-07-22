@@ -41,6 +41,9 @@ export default function PostCard({
     onTagClick,
     onImageClick,
     onProfileClick,
+    // When rendered on a user's profile, scope the immersive video feed to just
+    // that user's videos (Instagram/Facebook-style). Pass the username here.
+    videoFeedUser,
 }) {
     const navigate = useNavigate();
     const { showAlert } = useAlert();
@@ -267,7 +270,11 @@ export default function PostCard({
                                             // Remember feed scroll so returning from the
                                             // video feed lands back on this post.
                                             sessionStorage.setItem("scrollY", window.scrollY);
-                                            navigate(`/videos?start=${post.id}`);
+                                            navigate(
+                                                videoFeedUser
+                                                    ? `/videos?start=${post.id}&user=${encodeURIComponent(videoFeedUser)}`
+                                                    : `/videos?start=${post.id}`
+                                            );
                                         }}
                                         className="relative z-10 w-full h-full block max-h-[500px] object-contain bg-black cursor-pointer"
                                     />

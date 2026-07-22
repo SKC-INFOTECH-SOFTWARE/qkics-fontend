@@ -15,7 +15,7 @@ const extractResults = (data) =>
 
 const getClient = () => (getAccessToken() ? axiosSecure : axios);
 
-export default function useVideoFeed(startId) {
+export default function useVideoFeed(startId, username) {
   const [posts, setPosts] = useState([]);
   const [next, setNext] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -34,7 +34,11 @@ export default function useVideoFeed(startId) {
     setLoading(true);
 
     try {
-      const res = await getClient().get(`${prefix}/community/posts/videos/`);
+      // Scope to one user's videos when opened from their profile.
+      const url = username
+        ? `${prefix}/community/posts/videos/?user=${encodeURIComponent(username)}`
+        : `${prefix}/community/posts/videos/`;
+      const res = await getClient().get(url);
       const parsed = extractResults(res.data);
       let results = parsed.results.map(normalizePost);
 
@@ -74,7 +78,7 @@ export default function useVideoFeed(startId) {
     } finally {
       setLoading(false);
     }
-  }, [startId]);
+  }, [startId, username]);
 
   const loadMore = useCallback(async () => {
     const currentNext = nextRef.current;
