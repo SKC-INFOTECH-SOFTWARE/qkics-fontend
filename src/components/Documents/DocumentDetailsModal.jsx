@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import axiosSecure from "../utils/axiosSecure";
-import { FiDownload, FiX, FiCalendar, FiShield } from "react-icons/fi";
+import { FiDownload, FiX, FiCalendar, FiShield, FiFileText } from "react-icons/fi";
 import useModalEscape from "../hooks/useModalEscape";
 
-export default function DocumentDetailsModal({ uuid, onClose, theme }) {
-  const isDark = theme === "dark";
+export default function DocumentDetailsModal({ uuid, onClose }) {
   const [doc, setDoc] = useState(null);
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
@@ -45,95 +44,94 @@ export default function DocumentDetailsModal({ uuid, onClose, theme }) {
     }
   };
 
+  const isPremium = doc?.access_type === "PREMIUM";
+
   if (!doc) return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className={`p-8 rounded-2xl animate-pulse ${isDark ? "bg-neutral-800" : "bg-white"}`}>
-        <div className={`w-64 h-4 rounded mb-4 ${isDark ? "bg-neutral-700" : "bg-gray-200"}`}></div>
-        <div className={`w-48 h-3 rounded ${isDark ? "bg-neutral-800" : "bg-gray-100"}`}></div>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl bg-card border border-border p-6 animate-pulse">
+        <div className="h-9 w-9 rounded-xl bg-muted mb-4" />
+        <div className="w-3/4 h-5 rounded bg-muted mb-3" />
+        <div className="w-full h-3 rounded bg-muted/70 mb-2" />
+        <div className="w-5/6 h-3 rounded bg-muted/70" />
       </div>
     </div>
   );
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div
-        className={`w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl ${isDark ? "bg-neutral-900 border border-neutral-800 text-white" : "bg-white text-gray-900"
-          }`}
-      >
-        {/* Modal Header */}
-        <div className="relative p-8 pb-4">
+      <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl bg-card text-foreground border border-border">
+        {/* Header */}
+        <div className="relative flex items-center gap-3 px-5 py-4 border-b border-border">
+          <div className="h-9 w-9 shrink-0 rounded-xl bg-primary-soft flex items-center justify-center text-primary">
+            <FiFileText className="text-lg" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-base font-bold leading-tight truncate pr-2">{doc.title}</h3>
+            <p className="text-2xs font-bold uppercase tracking-widest text-muted-foreground">Document Insight</p>
+          </div>
           <button
             onClick={onClose}
-            className={`absolute top-6 right-6 p-2 rounded-full transition-colors ${isDark ? "hover:bg-neutral-800 text-gray-400" : "hover:bg-gray-100 text-gray-500"
-              }`}
+            className="ml-auto p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
           >
-            <FiX className="text-xl" />
+            <FiX className="text-lg" />
           </button>
-
-          <div className="flex items-center gap-2 mb-2 text-blue-500 font-bold text-xs uppercase tracking-widest">
-            <FiShield /> Document Insight
-          </div>
-          <h3 className="text-2xl font-extrabold leading-tight break-words pr-12">{doc.title}</h3>
         </div>
 
-        {/* Modal Body */}
-        <div className="px-8 py-4 overflow-y-auto max-h-[60vh] custom-scrollbar">
-          <p className={`text-base leading-relaxed mb-6 break-words ${isDark ? "text-neutral-400" : "text-gray-600"}`}>
-            {doc.description}
-          </p>
+        {/* Body */}
+        <div className="px-5 py-4 overflow-y-auto max-h-[55vh] custom-scrollbar">
+          {doc.description && (
+            <p className="text-sm leading-relaxed mb-5 break-words text-muted-foreground">
+              {doc.description}
+            </p>
+          )}
 
-          <div className="flex flex-wrap gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <span className={`p-1.5 rounded-lg ${isDark ? "bg-neutral-800 text-blue-400" : "bg-blue-50 text-blue-600"}`}>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2.5 rounded-xl border border-border bg-muted/40 px-3 py-2.5">
+              <span className="p-1.5 rounded-lg bg-primary-soft text-primary shrink-0">
                 <FiCalendar />
               </span>
-              <div>
-                <p className="text-2xs text-gray-500 uppercase font-bold tracking-tighter">Published</p>
-                <p className="font-semibold">{new Date(doc.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+              <div className="min-w-0">
+                <p className="text-3xs text-muted-foreground uppercase font-black tracking-wider">Published</p>
+                <p className="text-xs font-bold truncate">{new Date(doc.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className={`p-1.5 rounded-lg ${isDark ? "bg-neutral-800" : "bg-amber-50 text-amber-600"}`}>
+
+            <div className="flex items-center gap-2.5 rounded-xl border border-border bg-muted/40 px-3 py-2.5">
+              <span className={`p-1.5 rounded-lg shrink-0 ${isPremium ? "bg-amber-500/10 text-amber-500" : "bg-emerald-500/10 text-emerald-500"}`}>
                 <FiShield />
               </span>
-              <div>
-                <p className="text-2xs text-gray-500 uppercase font-bold tracking-tighter">Access</p>
-                <p className={`font-semibold ${doc.access_type === 'PREMIUM' ? 'text-amber-500' : 'text-emerald-500'}`}>{doc.access_type}</p>
+              <div className="min-w-0">
+                <p className="text-3xs text-muted-foreground uppercase font-black tracking-wider">Access</p>
+                <p className={`text-xs font-bold ${isPremium ? "text-amber-500" : "text-emerald-500"}`}>{doc.access_type}</p>
               </div>
             </div>
           </div>
 
           {error && (
-            <div className={`mt-6 p-4 rounded-xl border text-sm flex items-center gap-2 animate-shake ${isDark ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-red-50 border-red-100 text-red-600"}`}>
+            <div className="mt-4 p-3 rounded-lg border border-danger/20 bg-danger/10 text-danger text-sm flex items-center gap-2 animate-shake">
               <FiX className="flex-shrink-0" />
               {error}
             </div>
           )}
         </div>
 
-        {/* Modal Footer */}
-        <div className={`p-8 mt-4 flex gap-3 ${isDark ? "bg-neutral-800/50" : "bg-gray-50"}`}>
+        {/* Footer */}
+        <div className="flex gap-3 px-5 py-4 border-t border-border">
           <button
             onClick={onClose}
-            className={`flex-1 px-6 py-3 font-bold rounded-xl border transition-all ${isDark
-              ? "border-neutral-700 hover:bg-neutral-700 text-white"
-              : "border-gray-200 hover:bg-white hover:border-gray-300 text-gray-700"
-              }`}
+            className="flex-1 px-4 py-2.5 font-bold text-sm rounded-xl border border-border text-foreground hover:bg-muted transition-all"
           >
             Dismiss
           </button>
           <button
             onClick={handleDownload}
             disabled={isDownloading}
-            className={`flex-[2] px-6 py-3 font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all transform active:scale-95 ${isDownloading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25"
-              }`}
+            className="flex-[2] px-4 py-2.5 font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-95 bg-primary text-primary-foreground hover:bg-primary-hover disabled:opacity-50 disabled:pointer-events-none"
           >
             {isDownloading ? (
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
             ) : (
-              <FiDownload className="text-lg" />
+              <FiDownload className="text-base" />
             )}
             {isDownloading ? "Preparing..." : "Download PDF"}
           </button>
