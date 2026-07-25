@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 import axiosSecure from "../utils/axiosSecure";
 import useTags from "../hooks/useTags";
@@ -30,6 +30,21 @@ function CreatePostModal({ onClose, onSuccess, post, knowledgeHub = false }) {
   const { tags, loading: loadingTags } = useTags();
   const [loading, setLoading] = useState(false);
 
+  // Tags the user typed in this session (not yet in the shared cache). Merge
+  // them in so the newly-created tag shows as a selectable/selected chip.
+  const [localTags, setLocalTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+  const [addingTag, setAddingTag] = useState(false);
+
+  const allTags = useMemo(() => {
+    const seen = new Set();
+    return [...localTags, ...tags].filter((t) => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return true;
+    });
+  }, [tags, localTags]);
+
   const toggleTag = (tag) => {
     if (selectedTags.includes(tag.id)) {
       setSelectedTags(selectedTags.filter((t) => t !== tag.id));
@@ -39,6 +54,37 @@ function CreatePostModal({ onClose, onSuccess, post, knowledgeHub = false }) {
         return;
       }
       setSelectedTags([...selectedTags, tag.id]);
+    }
+  };
+
+  const handleAddTag = async () => {
+    const name = tagInput.trim();
+    if (!name) return;
+    if (selectedTags.length >= 5) {
+      showAlert("Max 5 tags allowed", "warning");
+      return;
+    }
+    // Already exists (case-insensitive)? Just select it, don't create a dupe.
+    const existing = allTags.find((t) => t.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      if (!selectedTags.includes(existing.id)) {
+        setSelectedTags([...selectedTags, existing.id]);
+      }
+      setTagInput("");
+      return;
+    }
+    try {
+      setAddingTag(true);
+      const res = await axiosSecure.post("/v1/community/tags/", { name });
+      const tag = res.data;
+      setLocalTags((prev) => [tag, ...prev]);
+      setSelectedTags((prev) => (prev.includes(tag.id) ? prev : [...prev, tag.id]));
+      setTagInput("");
+    } catch (err) {
+      console.error(err);
+      showAlert(err.response?.data?.error || "Could not add tag", "error");
+    } finally {
+      setAddingTag(false);
     }
   };
 
@@ -268,17 +314,50 @@ function CreatePostModal({ onClose, onSuccess, post, knowledgeHub = false }) {
 
           <div>
             <label className="text-2xs font-black uppercase tracking-widest text-muted-foreground mb-3 block text-left">Tags (max 5)</label>
+
+            {/* Add a custom tag */}
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+                maxLength={80}
+                placeholder="Type a tag and press Enter…"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-input bg-muted/40 text-sm transition-all outline-none focus:ring-2 focus:ring-ring focus:border-primary"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddTag}
+                loading={addingTag}
+                disabled={!tagInput.trim() || addingTag}
+              >
+                Add
+              </Button>
+            </div>
+
             {loadingTags ? (
               <div className="animate-pulse flex gap-2">
                 {[1, 2, 3].map(i => <div key={i} className="h-8 w-20 bg-muted rounded-full" />)}
               </div>
+            ) : allTags.length === 0 ? (
+              <p className="text-2xs text-muted-foreground uppercase tracking-widest font-bold py-2">
+                No tags yet — type above to add one.
+              </p>
             ) : (
               <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                {tags.map((tag) => {
+                {allTags.map((tag) => {
                   const active = selectedTags.includes(tag.id);
                   return (
                     <button
                       key={tag.id}
+                      type="button"
                       onClick={() => toggleTag(tag)}
                       className={`px-4 py-1.5 rounded-xl border text-2xs font-black uppercase tracking-widest transition-all active:scale-95 ${active
                         ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"

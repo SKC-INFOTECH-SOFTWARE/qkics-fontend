@@ -21,6 +21,10 @@ import ModalOverlay from "../components/ui/ModalOverlay";
 import PostCard from "../components/posts/PostCard";
 import SponsorCard from "../components/ui/SponsorCard";
 
+// Only the top few most-used tags show as "trending" — keeps the card compact
+// no matter how many custom tags users create. Backend orders tags popular-first.
+const TRENDING_TAG_LIMIT = 10;
+
 function Home() {
   const { data: loggedUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
@@ -36,7 +40,6 @@ function Home() {
   const [editingPost, setEditingPost] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  const [showAllTags, setShowAllTags] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [zoom, setZoom] = useState(1);
 
@@ -139,40 +142,40 @@ function Home() {
             {/* Tags Card */}
             <div className="premium-card p-6 bg-card">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Top Categories</h3>
+                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Trending Tags</h3>
                 {searchQuery && (
                   <button onClick={() => applySearch("")} className="text-2xs text-primary font-bold hover:underline">RESET</button>
                 )}
               </div>
 
-              <div className="space-y-2 max-h-[40vh] overflow-y-auto no-scrollbar">
+              <div className="flex flex-wrap gap-2 max-h-[40vh] overflow-y-auto no-scrollbar">
                 {loadingTags ? (
-                  <div className="space-y-2 animate-pulse">
-                    {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-10 rounded-xl bg-muted" />)}
+                  <div className="flex flex-wrap gap-2 animate-pulse">
+                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-8 w-20 rounded-full bg-muted" />)}
                   </div>
                 ) : (
                   <>
-                    {(showAllTags ? tags : tags.slice(0, 8)).map((tag) => (
+                    {/* Backend returns tags popular-first, so the top slice is
+                        the trending set. Rendered side-by-side as wrapping pills;
+                        stays compact no matter how many custom tags exist. */}
+                    {tags.slice(0, TRENDING_TAG_LIMIT).map((tag) => (
                       <button
                         key={tag.id}
                         onClick={() => applySearch(tag.name)}
-                        className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all group border ${searchQuery === tag.name
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all group border ${searchQuery === tag.name
                           ? "bg-primary-soft border-primary/50 text-primary"
-                          : "border-transparent hover:bg-muted text-foreground"
+                          : "bg-muted/50 border-border hover:border-primary/40 text-foreground"
                           }`}
                       >
-                        <span className="opacity-50 group-hover:opacity-100 transition-opacity mr-2">#</span>
+                        <span className="opacity-50 group-hover:opacity-100 transition-opacity mr-0.5">#</span>
                         {tag.name}
                       </button>
                     ))}
 
-                    {tags.length > 8 && (
-                      <button
-                        onClick={() => setShowAllTags(!showAllTags)}
-                        className="w-full py-3 mt-4 text-xs font-bold text-center border border-dashed border-border rounded-xl hover:bg-muted transition-colors"
-                      >
-                        {showAllTags ? "SHOW LESS" : "EXPLORE ALL"}
-                      </button>
+                    {tags.length === 0 && (
+                      <p className="w-full text-2xs text-muted-foreground text-center py-4 uppercase tracking-widest font-bold">
+                        No tags yet
+                      </p>
                     )}
                   </>
                 )}
@@ -202,7 +205,7 @@ function Home() {
                   {[1, 2, 3, 4].map(i => <div key={i} className="w-24 h-8 rounded-full bg-neutral-800/50 animate-pulse" />)}
                 </div>
               ) : (
-                tags.map((tag) => (
+                tags.slice(0, TRENDING_TAG_LIMIT).map((tag) => (
                   <button
                     key={tag.id}
                     onClick={() => applySearch(tag.name)}
