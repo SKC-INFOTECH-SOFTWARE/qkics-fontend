@@ -80,9 +80,8 @@ export default function AdminSubscriptions() {
               <div className="flex items-center justify-center">
                 <button
                   onClick={() => { setEditingPlan(plan); setShowModal(true); }}
-                  disabled={plan.active_user_count > 0}
-                  title={plan.active_user_count > 0 ? "Cannot edit active plan" : "Edit"}
-                  className="p-2 rounded-lg text-primary hover:bg-primary-soft transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                  title="Edit"
+                  className="p-2 rounded-lg text-primary hover:bg-primary-soft transition-colors"
                 >
                   <FaEdit />
                 </button>
