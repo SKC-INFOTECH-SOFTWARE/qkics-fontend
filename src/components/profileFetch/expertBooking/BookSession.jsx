@@ -373,24 +373,15 @@ export default function BookSession() {
             )}
           </div>
 
-          {/* RIGHT — BOOKING SUMMARY */}
+          {/* RIGHT — BOOKING SUMMARY (only appears once a slot is selected) */}
+          {selectedSlot && (
           <div className="w-full lg:w-[380px] shrink-0">
             <div className="lg:sticky lg:top-24 bg-card border border-border rounded-2xl shadow-sm p-6 md:p-8">
               <h2 className="text-lg font-bold tracking-tight mb-6">
                 Booking <span className="text-primary">Summary</span>
               </h2>
 
-              {!selectedSlot ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <FiCheckCircle size={44} className="mb-5 opacity-30" />
-                  <p className="text-2xs text-center font-black uppercase tracking-widest leading-loose">
-                    Select a slot from the
-                    <br />
-                    calendar to continue
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-6 animate-fadeIn">
+              <div className="space-y-6 animate-fadeIn">
                   {/* Consultation type — segmented control (or group badge for batch) */}
                   {isBatch ? (
                     <div>
@@ -511,9 +502,9 @@ export default function BookSession() {
                     {paymentProcessing ? "Processing" : "Confirm & Pay"}
                   </Button>
                 </div>
-              )}
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
