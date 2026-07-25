@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { FaVolumeUp, FaVolumeMute } from "react-icons/fa";
 
 /**
  * Feed video with scroll-aware playback:
@@ -37,8 +38,16 @@ function getScrollParent(node) {
   return null; // viewport / window scroll
 }
 
-export default function FeedVideo({ src, className, poster, controls = true, onClick }) {
+export default function FeedVideo({
+  src,
+  className,
+  poster,
+  controls = true,
+  onClick,
+  showMuteToggle = false,
+}) {
   const ref = useRef(null);
+  const [muted, setMuted] = useState(false);
 
   useEffect(() => {
     const video = ref.current;
@@ -69,9 +78,14 @@ export default function FeedVideo({ src, className, poster, controls = true, onC
     const handlePause = () => {
       if (activeVideo === video) activeVideo = null;
     };
+    // Keep the toggle icon in sync with the element — the autoplay fallback
+    // above may flip muted on its own before any user interaction.
+    const handleVolumeChange = () => setMuted(video.muted);
 
     video.addEventListener("play", handlePlay);
     video.addEventListener("pause", handlePause);
+    video.addEventListener("volumechange", handleVolumeChange);
+    setMuted(video.muted);
 
     const io = new IntersectionObserver(
       ([entry]) => {
@@ -89,11 +103,20 @@ export default function FeedVideo({ src, className, poster, controls = true, onC
       io.disconnect();
       video.removeEventListener("play", handlePlay);
       video.removeEventListener("pause", handlePause);
+      video.removeEventListener("volumechange", handleVolumeChange);
       if (activeVideo === video) activeVideo = null;
     };
   }, [src]);
 
-  return (
+  const toggleMute = (e) => {
+    e.stopPropagation(); // don't trigger the video's tap-to-open handler
+    const video = ref.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setMuted(video.muted);
+  };
+
+  const videoEl = (
     <video
       ref={ref}
       src={src}
@@ -104,5 +127,22 @@ export default function FeedVideo({ src, className, poster, controls = true, onC
       preload="metadata"
       onClick={onClick || ((e) => e.stopPropagation())}
     />
+  );
+
+  if (!showMuteToggle) return videoEl;
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center">
+      {videoEl}
+      <button
+        type="button"
+        onClick={toggleMute}
+        title={muted ? "Unmute" : "Mute"}
+        aria-label={muted ? "Unmute" : "Mute"}
+        className="absolute bottom-3 right-3 z-30 w-9 h-9 flex items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-black/80 transition-colors"
+      >
+        {muted ? <FaVolumeMute size={14} /> : <FaVolumeUp size={14} />}
+      </button>
+    </div>
   );
 }

@@ -265,6 +265,7 @@ export default function PostCard({
                                     <FeedVideo
                                         src={post.media[currentMediaIndex].file}
                                         controls={false}
+                                        showMuteToggle
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             // Remember feed scroll so returning from the
