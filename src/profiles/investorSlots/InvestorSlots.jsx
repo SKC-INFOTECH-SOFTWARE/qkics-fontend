@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import Container from "../../components/ui/Container";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -79,7 +80,7 @@ export default function InvestorSlots({ theme: propTheme }) {
   ----------------------------- */
   return (
     <div className={`min-h-screen px-4 py-4 md:px-8 ${isDark ? "bg-[#0a0a0a]" : "bg-[#f8f9fa]"}`}>
-      <div className="max-w-7xl mx-auto">
+      <Container padded={false}>
 
         {/* HEADER */}
         <div className={`premium-card p-8 md:p-12 mb-8 ${isDark ? "bg-neutral-900" : "bg-white"}`}>
@@ -134,7 +135,7 @@ export default function InvestorSlots({ theme: propTheme }) {
           </div>
         )}
 
-      </div>
+      </Container>
 
       {/* MODAL */}
       {showModal && (

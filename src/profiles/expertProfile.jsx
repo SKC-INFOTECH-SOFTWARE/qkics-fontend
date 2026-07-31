@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Container from "../components/ui/Container";
 import { MdEdit, MdOutlineEventAvailable } from "react-icons/md";
 import axiosSecure from "../components/utils/axiosSecure";
 import { useAlert } from "../context/AlertContext";
@@ -245,7 +246,7 @@ export default function ExpertProfile({
   =============================== */
   return (
     <div className="min-h-screen bg-background text-foreground lg:h-[calc(100vh-5rem)] lg:min-h-0 lg:overflow-hidden">
-      <div className="mx-auto h-full max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 pb-12 lg:pb-0">
+      <Container size="lg" className="h-full pt-6 pb-12 lg:pb-0">
         <div className="grid grid-cols-1 gap-6 lg:h-full lg:grid-cols-12">
 
           {/* LEFT — PROFILE (own scroll) */}
@@ -360,7 +361,7 @@ export default function ExpertProfile({
             <UserPosts />
           </div>
         </div>
-      </div>
+      </Container>
 
       {/* PROFILE PICTURE MODAL */}
       {showImageModal && (

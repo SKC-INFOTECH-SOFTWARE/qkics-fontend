@@ -92,7 +92,7 @@ export default function UserPosts() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
+    <div className="mx-auto w-full max-w-2xl 2xl:max-w-3xl">
       {/* HEADER */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-bold tracking-tight text-foreground">

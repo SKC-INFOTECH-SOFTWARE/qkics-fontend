@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import Container from "../../ui/Container";
 import { useParams, useNavigate } from "react-router-dom";
 
 import axiosSecure from "../../utils/axiosSecure";
@@ -173,7 +174,7 @@ export default function InvestorBookSession() {
       {/* Top Banner Area (adds premium feel) */}
       <div className={`h-40 w-full absolute top-0 left-0 z-0 bg-linear-to-b ${isDark ? "from-red-900/10 to-transparent" : "from-red-500/5 to-transparent"}`} />
 
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-10 px-4 md:px-8 relative z-10 pt-8">
+      <Container className="flex flex-col lg:flex-row gap-10 relative z-10 pt-8">
 
         {/* LEFT – SLOT LIST */}
         <div className="flex-1 w-full pt-4">
@@ -247,7 +248,7 @@ export default function InvestorBookSession() {
             )}
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   );
 }

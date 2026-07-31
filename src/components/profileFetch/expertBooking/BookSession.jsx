@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import Container from "../../ui/Container";
 import { useParams } from "react-router-dom";
 
 import axiosSecure from "../../utils/axiosSecure";
@@ -216,7 +217,7 @@ export default function BookSession() {
   /* ---------------- MAIN UI ---------------- */
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:pb-12">
+      <Container className="py-6 md:pb-12">
         <PageHeader
           breadcrumb={[
             { label: "Experts", to: "/experts" },
@@ -506,7 +507,7 @@ export default function BookSession() {
           </div>
           )}
         </div>
-      </div>
+      </Container>
     </div>
   );
 }

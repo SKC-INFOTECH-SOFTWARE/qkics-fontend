@@ -1,9 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
+import Container from "../ui/Container";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { MdOutlineSchedule, MdPerson, MdOutlinePayments, MdChatBubbleOutline, MdOutlineTimer, MdVideocam, MdGroups } from "react-icons/md";
 
 import axiosSecure from "../utils/axiosSecure";
+import { initiatePayment, redirectToGateway } from "../utils/paymentApi";
 import { useAlert } from "../../context/AlertContext";
 import { Button, Breadcrumb } from "../ui";
 
@@ -21,6 +23,7 @@ export default function MyBookings() {
   // "sessions" = slots I host  |  "bookings" = sessions I booked as a client
   const [activeTab, setActiveTab] = useState(canHost ? "sessions" : "bookings");
   const [now, setNow] = useState(new Date());
+  const [payingId, setPayingId] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 10000);
@@ -96,6 +99,33 @@ export default function MyBookings() {
     return all.sort((a, b) => new Date(b.start_datetime) - new Date(a.start_datetime));
   };
 
+  /* Resume an abandoned checkout: booking is stuck in AWAITING_PAYMENT because
+     the user backed out of the gateway. The backend still treats it as payable,
+     so we just re-initiate payment and follow whatever flow it returns. */
+  const handlePayNow = async (booking) => {
+    if (payingId) return;
+    try {
+      setPayingId(booking.uuid);
+      const res = await initiatePayment({ purpose: "BOOKING", booking_id: booking.uuid });
+      if (res.flow === "redirect_post" && res.checkout) {
+        redirectToGateway(res.checkout); // leaves the page → hosted checkout (PayU)
+        return;
+      }
+      if (res.flow === "instant") {
+        showAlert("Payment successful — booking confirmed", "success");
+        await fetchData();
+        return;
+      }
+      showAlert("Could not start payment. Please try again.", "error");
+    } catch (err) {
+      console.error(err);
+      const msg = err?.response?.data?.message || "Could not start payment. Please try again.";
+      showAlert(msg, "error");
+    } finally {
+      setPayingId(null);
+    }
+  };
+
   /* ---------------- STATUS CONFIG ---------------- */
   const getStatusConfig = (booking) => {
     const status = (booking.cancelled_at ? "CANCELLED" :
@@ -129,7 +159,7 @@ export default function MyBookings() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-12">
+      <Container className="pt-6 pb-12">
 
         {/* HEADER */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -220,6 +250,10 @@ export default function MyBookings() {
               }
 
               const canJoin = booking.chat_room_id || booking.call_room_id || ['CONFIRMED', 'PAID', 'COMPLETED'].includes(status.label);
+              // A booking I made that never got paid (abandoned checkout) — still payable.
+              const needsPayment = activeTab === "bookings" && !isGroupCard && status.label === "AWAITING_PAYMENT";
+              // A booking I made that is still waiting for the expert to approve — not payable yet.
+              const awaitingApproval = activeTab === "bookings" && !isGroupCard && status.label === "PENDING";
               const key = isGroupCard ? `grp-${booking.slot_uuid}` : booking.uuid;
 
               return (
@@ -328,12 +362,35 @@ export default function MyBookings() {
                       )}
                     </div>
                   )}
+
+                  {/* PAYMENT — booking stuck awaiting payment (abandoned checkout) */}
+                  {needsPayment && (
+                    <div className="mt-3">
+                      <Button
+                        fullWidth
+                        size="sm"
+                        loading={payingId === booking.uuid}
+                        onClick={() => handlePayNow(booking)}
+                      >
+                        <MdOutlinePayments size={16} /> Complete Payment
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Waiting for the expert to approve — no payment step yet */}
+                  {awaitingApproval && (
+                    <div className="mt-3">
+                      <Button fullWidth size="sm" variant="secondary" disabled>
+                        <MdOutlineSchedule size={16} /> Awaiting expert approval
+                      </Button>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+      </Container>
     </div>
   );
 }

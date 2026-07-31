@@ -18,6 +18,7 @@ import { MdNotificationsActive } from "react-icons/md";
 import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
 
 import useClickOutside from "./hooks/useClickOutside";
+import Container from "./ui/Container";
 import { getOwnProfileRoute } from "./utils/getUserProfileRoute";
 import { resolveAvatar } from "./utils/mediaUrl";
 import { useNotifications } from "../context/NotificationContext";
@@ -85,7 +86,7 @@ function Navbar({ theme, onToggleTheme, user, onOpenLogin }) {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 border-b border-border backdrop-blur-xl supports-backdrop-filter:bg-opacity-60 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 lg:h-20 flex items-center justify-between gap-6">
+        <Container className="h-16 lg:h-20 flex items-center justify-between gap-6">
 
           {/* LOGO */}
           <Link to="/" className="flex-shrink-0 group relative">
@@ -333,7 +334,7 @@ function Navbar({ theme, onToggleTheme, user, onOpenLogin }) {
               )}
             </div>
           </div>
-        </div>
+        </Container>
 
         {/* MOBILE SEARCH OVERLAY */}
         {searchMobile && (

@@ -1,5 +1,6 @@
 // src/pages/booking.jsx
 import { useEffect, useState, useRef } from "react";
+import Container from "../components/ui/Container";
 import axiosSecure from "../components/utils/axiosSecure";
 
 import ExpertCard from "../components/profileFetch/expertBooking/ExpertCard";
@@ -108,7 +109,7 @@ export default function Booking() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
+      <Container className="pt-6 pb-12">
 
         {/* HEADER */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between mb-8">
@@ -187,7 +188,7 @@ export default function Booking() {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
           </div>
         )}
-      </div>
+      </Container>
     </div>
   );
 }

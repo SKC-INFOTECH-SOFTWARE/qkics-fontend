@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import Container from "./components/ui/Container";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { getAccessToken } from "./redux/store/tokenManager";
@@ -282,7 +283,7 @@ export default function ChatPage() {
   /* ============================ UI ============================ */
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-136px)] w-full max-w-7xl overflow-hidden bg-background text-foreground md:h-[calc(100vh-80px)]">
+    <Container padded={false} className="flex h-[calc(100vh-136px)] overflow-hidden bg-background text-foreground md:h-[calc(100vh-80px)]">
 
       {/* ================= LEFT SIDEBAR ================= */}
       <aside className={`flex w-full flex-col border-r border-border bg-card md:w-80 lg:w-96 ${selectedRoom && "hidden md:flex"}`}>
@@ -571,6 +572,6 @@ export default function ChatPage() {
           </div>
         )}
       </main>
-    </div>
+    </Container>
   );
 }

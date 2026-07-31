@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import Container from "../../components/ui/Container";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -107,7 +108,7 @@ export default function ExpertSlots() {
   ----------------------------- */
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-12">
+      <Container className="pt-6 pb-12">
 
         {/* HEADER */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -165,7 +166,7 @@ export default function ExpertSlots() {
           </div>
         )}
 
-      </div>
+      </Container>
 
       {/* MODAL */}
       {showModal && (

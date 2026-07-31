@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import Container from "../components/ui/Container";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { MdOutlineFileDownload, MdFilterList } from "react-icons/md";
@@ -179,7 +180,7 @@ export default function SearchResultsPage() {
 
     return (
         <div className="min-h-screen bg-background text-foreground py-4 transition-colors duration-300">
-            <div className="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-12 gap-8">
+            <Container className="grid grid-cols-12 gap-8">
 
                 {/* SIDEBAR: TAGS */}
                 <aside className="hidden md:block md:col-span-3 lg:col-span-3">
@@ -382,7 +383,7 @@ export default function SearchResultsPage() {
                         </button>
                     </div>
                 </aside>
-            </div>
+            </Container>
 
             {/* MODALS */}
             {showEditModal && (

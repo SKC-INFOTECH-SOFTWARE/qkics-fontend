@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import Container from "../../components/ui/Container";
 import { useSelector } from "react-redux";
 import axiosSecure from "../../components/utils/axiosSecure";
 import CompanyPostCard from "./components/CompanyPostCard";
@@ -159,7 +160,7 @@ export default function CompanyPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground py-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Container>
         {/* HEADER & TABS SELECTOR */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 animate-fadeIn">
           <div className="max-w-xl">
@@ -269,7 +270,7 @@ export default function CompanyPage() {
           )}
         </div>
 
-      </div>
+      </Container>
 
       {showDeleteConfirm && (
         <ConfirmationAlert

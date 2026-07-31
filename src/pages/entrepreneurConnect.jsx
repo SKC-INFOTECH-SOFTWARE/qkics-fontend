@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import Container from "../components/ui/Container";
 import axiosSecure from "../components/utils/axiosSecure";
 import InvestorCard from "../components/profileFetch/investorFetch/InvestorCard";
 import { useNavigate } from "react-router-dom";
@@ -99,7 +100,7 @@ export default function EntrepreneurConnect() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:pb-12">
+    <Container className="py-4 md:pb-12">
       <PageHeader
         breadcrumb={[{ label: "Entrepreneur Connect" }]}
         title={<>Connect with <span className="text-primary">Investors</span></>}
@@ -134,7 +135,7 @@ export default function EntrepreneurConnect() {
           <LoadingSpinner />
         </div>
       )}
-    </div>
+    </Container>
     </div>
   );
 }

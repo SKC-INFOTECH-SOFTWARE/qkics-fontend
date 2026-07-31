@@ -20,6 +20,7 @@ import SignupModal from "../components/auth/Signup";
 import ModalOverlay from "../components/ui/ModalOverlay";
 import PostCard from "../components/posts/PostCard";
 import SponsorCard from "../components/ui/SponsorCard";
+import Container from "../components/ui/Container";
 
 // Only the top few most-used tags show as "trending" — keeps the card compact
 // no matter how many custom tags users create. Backend orders tags popular-first.
@@ -119,10 +120,10 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground md:pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 flex gap-6 xl:gap-8">
+      <Container className="pt-3 flex gap-6 xl:gap-8">
 
         {/* LEFT SIDEBAR — appears at lg */}
-        <aside className="hidden lg:block w-60 xl:w-64 shrink-0">
+        <aside className="hidden lg:block w-60 xl:w-64 2xl:w-72 shrink-0">
           <div className="sticky top-24 space-y-6">
             {/* Create Post Button */}
             <button
@@ -196,7 +197,7 @@ function Home() {
         </aside>
 
         {/* MAIN FEED — always visible, dominant width */}
-        <main className="flex-1 min-w-0 max-w-2xl pb-4 space-y-6">
+        <main className="flex-1 min-w-0 max-w-2xl xl:max-w-4xl pb-4 space-y-6">
           {/* MOBILE TAGS */}
           <div className="lg:hidden relative group mb-2">
             <div className="overflow-x-auto pb-4 flex gap-3 no-scrollbar pr-14">
@@ -284,7 +285,7 @@ function Home() {
         </main>
 
         {/* RIGHT SIDEBAR — appears at xl */}
-        <aside className="hidden xl:block w-72 shrink-0">
+        <aside className="hidden xl:block w-72 2xl:w-80 shrink-0">
           <div className="sticky top-24 space-y-6 py-4">
             <SponsorCard />
 
@@ -299,7 +300,7 @@ function Home() {
             </footer> */}
           </div>
         </aside>
-      </div>
+      </Container>
 
       {showCreatePost && (
         <ModalOverlay close={() => { setShowCreatePost(false); setEditingPost(null); }}>

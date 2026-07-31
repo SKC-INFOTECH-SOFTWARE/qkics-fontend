@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Container from "../components/ui/Container";
 import { useSelector } from "react-redux";
 import { FaPlus } from "react-icons/fa6";
 import Document from "./document";
@@ -22,7 +23,7 @@ export default function DocumentsPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+      <Container className="py-6">
 
         <PageHeader
           breadcrumb={[{ label: "Documents" }]}
@@ -73,7 +74,7 @@ export default function DocumentsPage() {
             </div>
           )}
         </div>
-      </div>
+      </Container>
 
       <UploadDocumentModal
         isOpen={isUploadModalOpen}
