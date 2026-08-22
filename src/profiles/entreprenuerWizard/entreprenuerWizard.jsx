@@ -83,6 +83,7 @@ export default function EntrepreneurWizard({ theme }) {
         text: `❌ Your application was rejected. ${note ? "Admin note: " + note : ""}`,
       };
     }
+    
 
     return null;
   })();

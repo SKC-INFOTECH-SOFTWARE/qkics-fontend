@@ -5,7 +5,8 @@ import { FiX, FiUser, FiUsers, FiClock } from "react-icons/fi";
 import { Button } from "../../components/ui";
 import { cn } from "../../components/ui/cn";
 
-const MAX_BATCH_CAPACITY = 10;
+// Business ceiling only — must match ExpertSlot.MAX_BATCH_CAPACITY on the backend.
+const MAX_BATCH_CAPACITY = 80;
 
 const labelClass =
   "mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted-foreground";
@@ -85,6 +86,7 @@ export default function SlotForm({
   ----------------------------- */
   const handleSubmit = (e) => {
     e.preventDefault();
+    
 
     if (!start || !end) {
       showAlert("Start and end times are required", "error");

@@ -5,7 +5,7 @@ import axiosSecure from "../../components/utils/axiosSecure";
 import { useAlert } from "../../context/AlertContext";
 import { FiEdit, FiCheck, FiX } from "react-icons/fi";
 
-import { useSelector } from "react-redux";
+import { useSelector} from "react-redux";
 
 const labelClass =
   "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground";

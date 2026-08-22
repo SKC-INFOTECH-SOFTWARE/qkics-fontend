@@ -70,6 +70,7 @@ const AdminCompanies                  = lazy(() => import("./admin/adminPages/ad
 const AdminAdvertisements             = lazy(() => import("./admin/adminPages/adminAdvertisements"));
 const AdminRecordings                 = lazy(() => import("./admin/adminPages/adminRecordings"));
 
+
 // ─── Full-screen loader shown while chunks download ───────────────────────────
 function PageLoader() {
   return (
@@ -106,8 +107,10 @@ function App() {
     if (theme === "dark") {
       root.classList.add("dark");
       document.body.classList.add("bg-neutral-900", "text-white");
+
       document.body.classList.remove("bg-white", "text-black");
-    } else {
+    }
+     else {
       root.classList.remove("dark");
       document.body.classList.add("bg-white", "text-black");
       document.body.classList.remove("bg-neutral-900", "text-white");
@@ -241,7 +244,7 @@ function App() {
 
           <Route path="*"                               element={<Error setIsErrorPage={setIsErrorPage} />} />
 
-        </Routes>
+        </Routes>   
       </Suspense>
     </ErrorBoundary>
   );
