@@ -29,7 +29,6 @@ import {
   getMyNote,
   uploadCallFile,
   saveMyNote,
-  endCall,
   muteCallParticipant,
   muteAllCallParticipants,
   removeCallParticipant,
@@ -479,7 +478,6 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
   const [scheduledEnd, setScheduledEnd] = useState(null);
   const [isBatch, setIsBatch] = useState(false);
   const [hostId, setHostId] = useState("");
-  const [hasRemoteJoined, setHasRemoteJoined] = useState(false);
   const [activePanel, setActivePanel] = useState(null); // "chat" | "notes" | null
   const [note, setNote] = useState("");
   const [chatInput, setChatInput] = useState("");
@@ -547,16 +545,17 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
     try {
       await lk.disconnect().catch(() => {});
       await chat.disconnect().catch(() => {});
-      // 1:1 call → end the shared room. Group call → leaving is personal;
-      // the room ends on its scheduled-end timer, not when one person leaves.
-      if (!isBatch) {
-        await endCall(call_room_id).catch(() => {});
-      }
+      // Leaving is ALWAYS personal — for both 1:1 and group calls. One person
+      // leaving (the host/expert included) must NOT end the call for everyone
+      // else. The room is closed only by its scheduled-end timer (server-side
+      // auto-cut), or by LiveKit once it stays empty (empty_timeout). This lets
+      // the host drop and reconnect while the other participant keeps waiting,
+      // instead of the whole call shutting down.
     } finally {
       // Force navigation back to bookings no matter what
       onCallEnd?.();
     }
-  }, [lk, chat, call_room_id, onCallEnd, isBatch]);
+  }, [lk, chat, onCallEnd]);
 
   const triggerEndCall = () => {
     if (isEnding) return;
@@ -579,20 +578,11 @@ export default function VideoCallComponent({ call_room_id, token, onCallEnd }) {
     return () => clearInterval(id);
   }, [scheduledEnd, handleEndCall, isEnding]);
 
-  // ───────── Synced Call Termination (Participant Monitoring) ─────────
-  // Only applies to 1:1 calls. In a group (batch) call, people come and go —
-  // the call ends via the End button or the scheduled-end timer, not because
-  // one participant left.
-  useEffect(() => {
-    if (isBatch) return;
-    if (lk.remoteParticipantCount > 0) {
-      setHasRemoteJoined(true);
-    }
-    // If someone was present and now they've left, terminate for this side too
-    if (hasRemoteJoined && lk.remoteParticipantCount === 0 && !isEnding && !loading) {
-      handleEndCall();
-    }
-  }, [isBatch, lk.remoteParticipantCount, hasRemoteJoined, isEnding, loading, handleEndCall]);
+  // NOTE: We deliberately do NOT auto-terminate when the remote participant
+  // count hits zero. A participant leaving (the host/expert included) must not
+  // end the call for whoever is still here — they can drop and reconnect, and
+  // the room is closed only by its scheduled-end timer (server-side auto-cut)
+  // or LiveKit's empty_timeout. The user simply stays connected and can wait.
 
   // Host removed us (or the room was closed) → leave the page immediately
   // instead of showing "Reconnecting…".
