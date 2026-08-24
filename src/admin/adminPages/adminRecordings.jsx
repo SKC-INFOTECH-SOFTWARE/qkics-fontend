@@ -95,8 +95,10 @@ export default function AdminRecordings() {
       setBusyId(rec.id);
       const url = await getSignedUrl(rec.id);
       if (!url) throw new Error("no url");
-      // signed URL is a direct Cloudinary asset — open in a new tab to download
-      window.open(url, "_blank", "noopener");
+      // signed URL streams the local file via the backend; &download=1 forces a
+      // save (Content-Disposition: attachment) instead of inline playback.
+      const dl = url.includes("?") ? `${url}&download=1` : `${url}?download=1`;
+      window.open(dl, "_blank", "noopener");
     } catch (err) {
       console.error(err);
       showAlert("Could not generate download link", "error");
