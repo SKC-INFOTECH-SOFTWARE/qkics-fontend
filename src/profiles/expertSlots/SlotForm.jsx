@@ -32,6 +32,10 @@ export default function SlotForm({
   const [capacity, setCapacity] = useState(2);
   const [batchPrice, setBatchPrice] = useState("");
   const [requiresApproval, setRequiresApproval] = useState(true);
+  // Free-session toggles. When on, the price input hides and no money is charged.
+  const [isChatFree, setIsChatFree] = useState(false);
+  const [isVideoFree, setIsVideoFree] = useState(false);
+  const [isBatchFree, setIsBatchFree] = useState(false);
 
   const isBatch = slotMode === "BATCH";
 
@@ -59,6 +63,9 @@ export default function SlotForm({
     setCapacity(initialData.capacity && initialData.capacity >= 2 ? initialData.capacity : 2);
     setBatchPrice(initialData.batch_price && Number(initialData.batch_price) > 0 ? initialData.batch_price : "");
     setRequiresApproval(initialData.requires_approval);
+    setIsChatFree(Boolean(initialData.is_chat_free));
+    setIsVideoFree(Boolean(initialData.is_video_call_free));
+    setIsBatchFree(Boolean(initialData.is_batch_free));
   }, [initialData]);
 
   // Recalculate duration when times change
@@ -106,14 +113,14 @@ export default function SlotForm({
 
     if (isBatch) {
       const capacityVal = Number(capacity) || 0;
-      const batchPriceVal = Number(batchPrice) || 0;
+      const batchPriceVal = isBatchFree ? 0 : Number(batchPrice) || 0;
 
       if (capacityVal < 2 || capacityVal > MAX_BATCH_CAPACITY) {
         showAlert(`Group capacity must be between 2 and ${MAX_BATCH_CAPACITY}`, "error");
         return;
       }
-      if (batchPriceVal <= 0) {
-        showAlert("Per-user price must be greater than 0", "error");
+      if (!isBatchFree && batchPriceVal <= 0) {
+        showAlert("Per-user price must be greater than 0, or mark it free", "error");
         return;
       }
 
@@ -124,7 +131,10 @@ export default function SlotForm({
         duration_minutes: Number(duration),
         capacity: capacityVal,
         batch_price: batchPriceVal,
+        is_batch_free: isBatchFree,
       };
+
+      const batchMsg = isBatchFree ? "Free" : `₹${batchPriceVal}`;
 
       confirmBody = (
         <div className="space-y-2">
@@ -140,22 +150,24 @@ export default function SlotForm({
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Price (per user):</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">₹{batchPriceVal}</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">{batchMsg}</span>
             </div>
           </div>
           <p className="mt-2 text-xs font-medium text-muted-foreground">
-            Up to {capacityVal} users can book this slot. Each pays ₹{batchPriceVal}. Approval is not required.
+            Up to {capacityVal} users can book this slot. {isBatchFree ? "It's free — no payment needed." : `Each pays ₹${batchPriceVal}.`} Approval is not required.
           </p>
         </div>
       );
     } else {
-      if ((chatPrice === "" || chatPrice === null) && (videoCallPrice === "" || videoCallPrice === null)) {
-        showAlert("At least one price (Chat or Video Call) must be set", "error");
+      const chatPriceVal = isChatFree ? 0 : Number(chatPrice) || 0;
+      const videoCallPriceVal = isVideoFree ? 0 : Number(videoCallPrice) || 0;
+      const chatEnabled = isChatFree || chatPriceVal > 0;
+      const videoEnabled = isVideoFree || videoCallPriceVal > 0;
+
+      if (!chatEnabled && !videoEnabled) {
+        showAlert("Enable at least one of Chat or Video Call (set a price or mark it free)", "error");
         return;
       }
-
-      const chatPriceVal = Number(chatPrice) || 0;
-      const videoCallPriceVal = Number(videoCallPrice) || 0;
 
       payload = {
         slot_mode: "ONE_TO_ONE",
@@ -164,13 +176,13 @@ export default function SlotForm({
         duration_minutes: Number(duration),
         chat_price: chatPriceVal,
         video_call_price: videoCallPriceVal,
+        is_chat_free: isChatFree,
+        is_video_call_free: isVideoFree,
         requires_approval: requiresApproval,
-        is_chat_available: chatPriceVal > 0,
-        is_video_call_available: videoCallPriceVal > 0,
       };
 
-      const chatMsg = chatPriceVal > 0 ? `₹${chatPriceVal}` : "Not Available";
-      const videoMsg = videoCallPriceVal > 0 ? `₹${videoCallPriceVal}` : "Not Available";
+      const chatMsg = isChatFree ? "Free" : chatPriceVal > 0 ? `₹${chatPriceVal}` : "Not Available";
+      const videoMsg = isVideoFree ? "Free" : videoCallPriceVal > 0 ? `₹${videoCallPriceVal}` : "Not Available";
 
       confirmBody = (
         <div className="space-y-2">
@@ -178,14 +190,14 @@ export default function SlotForm({
           <div className="space-y-1 rounded-xl bg-muted p-4">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Chat Consultation:</span>
-              <span className={`font-bold ${chatPriceVal > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-danger"}`}>{chatMsg}</span>
+              <span className={`font-bold ${chatEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-danger"}`}>{chatMsg}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Video Call:</span>
-              <span className={`font-bold ${videoCallPriceVal > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-danger"}`}>{videoMsg}</span>
+              <span className={`font-bold ${videoEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-danger"}`}>{videoMsg}</span>
             </div>
           </div>
-          {(chatPriceVal === 0 || videoCallPriceVal === 0) && (
+          {(!chatEnabled || !videoEnabled) && (
             <p className="mt-2 text-xs font-medium text-danger">
               Note: Features with "Not Available" cannot be booked by users for this slot.
             </p>
@@ -291,9 +303,9 @@ export default function SlotForm({
         {/* PRICING */}
         <div>
           <label className={labelClass}>{isBatch ? "Group Pricing" : "Pricing"}</label>
-          <div className="grid grid-cols-2 gap-2.5">
-            {isBatch ? (
-              <>
+          {isBatch ? (
+            <>
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
                   <span className="mb-1 block text-xs font-semibold text-muted-foreground">
                     Max Participants (2–{MAX_BATCH_CAPACITY})
@@ -310,47 +322,72 @@ export default function SlotForm({
                 </div>
                 <div>
                   <span className="mb-1 block text-xs font-semibold text-muted-foreground">Price / User (₹)</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={batchPrice}
-                    onChange={(e) => setBatchPrice(e.target.value)}
-                    className={fieldClass}
-                    placeholder="0.00"
-                  />
+                  {isBatchFree ? (
+                    <FreePill />
+                  ) : (
+                    <input
+                      type="number"
+                      min={0}
+                      value={batchPrice}
+                      onChange={(e) => setBatchPrice(e.target.value)}
+                      className={fieldClass}
+                      placeholder="0.00"
+                    />
+                  )}
                 </div>
-              </>
-            ) : (
-              <>
+              </div>
+              <FreeCheckbox
+                checked={isBatchFree}
+                onChange={setIsBatchFree}
+                label="Make this group call free (no charge)"
+              />
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <span className="mb-1 block text-xs font-semibold text-muted-foreground">Chat (₹)</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={chatPrice}
-                    onChange={(e) => setChatPrice(e.target.value)}
-                    className={fieldClass}
-                    placeholder="0.00"
+                  <PriceHeader
+                    label="Chat (₹)"
+                    free={isChatFree}
+                    onToggleFree={() => setIsChatFree((v) => !v)}
                   />
+                  {isChatFree ? (
+                    <FreePill />
+                  ) : (
+                    <input
+                      type="number"
+                      min={0}
+                      value={chatPrice}
+                      onChange={(e) => setChatPrice(e.target.value)}
+                      className={fieldClass}
+                      placeholder="0.00"
+                    />
+                  )}
                 </div>
                 <div>
-                  <span className="mb-1 block text-xs font-semibold text-muted-foreground">Video Call (₹)</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={videoCallPrice}
-                    onChange={(e) => setVideoCallPrice(e.target.value)}
-                    className={fieldClass}
-                    placeholder="0.00"
+                  <PriceHeader
+                    label="Video Call (₹)"
+                    free={isVideoFree}
+                    onToggleFree={() => setIsVideoFree((v) => !v)}
                   />
+                  {isVideoFree ? (
+                    <FreePill />
+                  ) : (
+                    <input
+                      type="number"
+                      min={0}
+                      value={videoCallPrice}
+                      onChange={(e) => setVideoCallPrice(e.target.value)}
+                      className={fieldClass}
+                      placeholder="0.00"
+                    />
+                  )}
                 </div>
-              </>
-            )}
-          </div>
-          {!isBatch && (
-            <p className="mt-1.5 text-2xs text-muted-foreground">
-              Set at least one. Leave a field at 0 to disable that option.
-            </p>
+              </div>
+              <p className="mt-1.5 text-2xs text-muted-foreground">
+                Set at least one. Leave a field at 0 to disable it, or tick <b>Free</b> to offer it at no charge.
+              </p>
+            </>
           )}
         </div>
 
@@ -386,6 +423,48 @@ export default function SlotForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+/* ---------------- SUB-COMPONENT: price field header with "Free" toggle ---------------- */
+function PriceHeader({ label, free, onToggleFree }) {
+  return (
+    <div className="mb-1 flex items-center justify-between gap-2">
+      <span className="text-xs font-semibold text-muted-foreground">{label}</span>
+      <label className="flex cursor-pointer items-center gap-1 text-2xs font-bold uppercase tracking-wide text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={free}
+          onChange={onToggleFree}
+          className="h-3.5 w-3.5 rounded accent-primary"
+        />
+        Free
+      </label>
+    </div>
+  );
+}
+
+/* Green "FREE" pill shown where a price input would be, when the option is free. */
+function FreePill() {
+  return (
+    <div className="flex h-[38px] items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-xs font-black uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+      Free · No charge
+    </div>
+  );
+}
+
+/* Full-width checkbox row (used for batch free). */
+function FreeCheckbox({ checked, onChange, label }) {
+  return (
+    <label className="mt-2.5 flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-muted/40 p-3 transition-all hover:bg-muted">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 shrink-0 rounded accent-primary"
+      />
+      <span className="text-sm font-medium">{label}</span>
+    </label>
   );
 }
 

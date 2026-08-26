@@ -76,18 +76,24 @@ export default function BookSession() {
     }
   };
 
+  // Does the slot offer chat / video at all? (a free option has price 0 but is
+  // still offered, so check the free flag too).
+  const chatOffered = selectedSlot
+    ? Boolean(selectedSlot.is_chat_free) || Number(selectedSlot.chat_price) > 0
+    : false;
+  const videoOffered = selectedSlot
+    ? Boolean(selectedSlot.is_video_call_free) || Number(selectedSlot.video_call_price) > 0
+    : false;
+
   // Auto-select booking type when slot changes
   useEffect(() => {
     if (!selectedSlot) return;
 
     if (selectedSlot.slot_mode === "BATCH") {
       setBookingType("VIDEO_CALL"); // batch is group video only
-    } else if (Number(selectedSlot.chat_price) > 0 && selectedSlot.is_chat_available) {
+    } else if (chatOffered && selectedSlot.is_chat_available) {
       setBookingType("CHAT");
-    } else if (
-      Number(selectedSlot.video_call_price) > 0 &&
-      selectedSlot.is_video_call_available
-    ) {
+    } else if (videoOffered && selectedSlot.is_video_call_available) {
       setBookingType("VIDEO_CALL");
     }
   }, [selectedSlot]);
@@ -103,6 +109,10 @@ export default function BookSession() {
         : selectedSlot.video_call_price
     : 0;
 
+  // Free session for the currently chosen option → no payment step.
+  const isFree = Boolean(selectedSlot) && Number(currentPrice) <= 0;
+  const priceLabel = isFree ? "Free" : `₹${currentPrice}`;
+
   const handleProceedToPay = () => {
     if (!selectedSlot || paymentProcessing) return;
 
@@ -113,20 +123,48 @@ export default function BookSession() {
         : "Video Call";
 
     showConfirm({
-      title: "Confirm Payment",
-      message: `You will be charged ₹${currentPrice} for this ${sessionLabel} session. Continue?`,
-      confirmText: "Pay Now",
+      title: isFree ? "Confirm Booking" : "Confirm Payment",
+      message: isFree
+        ? `This ${sessionLabel} session is free. Confirm your booking?`
+        : `You will be charged ₹${currentPrice} for this ${sessionLabel} session. Continue?`,
+      confirmText: isFree ? "Confirm" : "Pay Now",
       cancelText: "Cancel",
 
       onConfirm: async () => {
         setPaymentProcessing(true);
         const wasBatch = isBatch;
 
+        const finishAndRefresh = (slotUuid) => {
+          setSelectedSlot(null);
+          setAgreed(false);
+          dispatch(resetBookingState());
+          if (wasBatch) {
+            // Batch slot may still have seats — refresh to update seats left.
+            fetchSlots();
+          } else {
+            // One-to-one slot is now taken — remove it.
+            setSlots((prev) => prev.filter((s) => s.uuid !== slotUuid));
+          }
+        };
+
         try {
           /* 1️⃣ CREATE BOOKING */
           const booking = await dispatch(
             createBooking({ slotUuid: selectedSlot.uuid, bookingType })
           ).unwrap();
+
+          /* FREE SESSION → no payment. The backend already confirmed it
+             (or left it PENDING if the expert requires approval). */
+          if (isFree) {
+            setPaymentProcessing(false);
+            if (booking.status === "PENDING") {
+              showAlert("Booking request sent. Awaiting expert approval.", "success");
+            } else {
+              showAlert("Booking confirmed — it's free!", "success");
+            }
+            finishAndRefresh(booking.slot_uuid);
+            return;
+          }
 
           /* 2️⃣ START PAYMENT (gateway-agnostic) */
           const pay = await initiatePayment({
@@ -144,22 +182,14 @@ export default function BookSession() {
           /* 2c️⃣ Instant gateway (fake): already confirmed. */
           setPaymentProcessing(false);
           showAlert("Payment successful! Booking confirmed.", "success");
-
-          setSelectedSlot(null);
-          setAgreed(false);
-          dispatch(resetBookingState());
-
-          if (wasBatch) {
-            // Batch slot may still have seats — refresh to update seats left.
-            fetchSlots();
-          } else {
-            // One-to-one slot is now fully booked — remove it.
-            setSlots((prev) => prev.filter((s) => s.uuid !== booking.slot_uuid));
-          }
+          finishAndRefresh(booking.slot_uuid);
         } catch (err) {
-          console.error("Payment failed:", err);
+          console.error("Booking failed:", err);
           setPaymentProcessing(false);
-          showAlert("Payment failed. Please try again.", "error");
+          showAlert(
+            isFree ? "Booking failed. Please try again." : "Payment failed. Please try again.",
+            "error"
+          );
         }
       },
     });
@@ -316,8 +346,13 @@ export default function BookSession() {
                                     <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
                                       Per User
                                     </span>
-                                    <span className={cn("text-base font-black", isSelected && "text-primary")}>
-                                      ₹{slot.batch_price}
+                                    <span className={cn(
+                                      "text-base font-black",
+                                      slot.is_batch_free
+                                        ? "text-emerald-600 dark:text-emerald-400"
+                                        : isSelected && "text-primary"
+                                    )}>
+                                      {slot.is_batch_free ? "Free" : `₹${slot.batch_price}`}
                                     </span>
                                   </div>
                                   <div className="flex justify-between items-center">
@@ -331,7 +366,7 @@ export default function BookSession() {
                                 </>
                               ) : (
                                 <>
-                                  {Number(slot.chat_price) > 0 && (
+                                  {(slot.is_chat_free || Number(slot.chat_price) > 0) && (
                                     <div className="flex justify-between items-center">
                                       <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
                                         Chat
@@ -339,14 +374,16 @@ export default function BookSession() {
                                       <span
                                         className={cn(
                                           "text-base font-black",
-                                          isSelected && "text-primary"
+                                          slot.is_chat_free
+                                            ? "text-emerald-600 dark:text-emerald-400"
+                                            : isSelected && "text-primary"
                                         )}
                                       >
-                                        ₹{slot.chat_price}
+                                        {slot.is_chat_free ? "Free" : `₹${slot.chat_price}`}
                                       </span>
                                     </div>
                                   )}
-                                  {Number(slot.video_call_price) > 0 && (
+                                  {(slot.is_video_call_free || Number(slot.video_call_price) > 0) && (
                                     <div className="flex justify-between items-center">
                                       <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
                                         Video Call
@@ -354,10 +391,12 @@ export default function BookSession() {
                                       <span
                                         className={cn(
                                           "text-base font-black",
-                                          isSelected && "text-primary"
+                                          slot.is_video_call_free
+                                            ? "text-emerald-600 dark:text-emerald-400"
+                                            : isSelected && "text-primary"
                                         )}
                                       >
-                                        ₹{slot.video_call_price}
+                                        {slot.is_video_call_free ? "Free" : `₹${slot.video_call_price}`}
                                       </span>
                                     </div>
                                   )}
@@ -404,29 +443,33 @@ export default function BookSession() {
                         Consultation Type
                       </p>
                       <div className="inline-flex w-full gap-1 rounded-2xl border border-border bg-muted/50 p-1.5">
-                        {Number(selectedSlot.chat_price) > 0 && (
+                        {chatOffered && (
                           <TypeToggle
                             active={bookingType === "CHAT"}
                             disabled={!selectedSlot.is_chat_available}
                             onClick={() => setBookingType("CHAT")}
                             icon={<FiMessageSquare size={13} />}
                             label={
-                              selectedSlot.is_chat_available
-                                ? "Chat"
-                                : "Chat (Booked)"
+                              !selectedSlot.is_chat_available
+                                ? "Chat (Booked)"
+                                : selectedSlot.is_chat_free
+                                  ? "Chat · Free"
+                                  : "Chat"
                             }
                           />
                         )}
-                        {Number(selectedSlot.video_call_price) > 0 && (
+                        {videoOffered && (
                           <TypeToggle
                             active={bookingType === "VIDEO_CALL"}
                             disabled={!selectedSlot.is_video_call_available}
                             onClick={() => setBookingType("VIDEO_CALL")}
                             icon={<FiVideo size={13} />}
                             label={
-                              selectedSlot.is_video_call_available
-                                ? "Video"
-                                : "Video (Booked)"
+                              !selectedSlot.is_video_call_available
+                                ? "Video (Booked)"
+                                : selectedSlot.is_video_call_free
+                                  ? "Video · Free"
+                                  : "Video"
                             }
                           />
                         )}
@@ -458,7 +501,7 @@ export default function BookSession() {
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">{isBatch ? "Fee (per user)" : "Session Fee"}</span>
-                      <span className="font-bold">₹{currentPrice}</span>
+                      <span className={cn("font-bold", isFree && "text-emerald-600 dark:text-emerald-400")}>{priceLabel}</span>
                     </div>
                   </div>
 
@@ -468,8 +511,11 @@ export default function BookSession() {
                       <span className="text-2xs font-black uppercase tracking-widest text-muted-foreground">
                         Total
                       </span>
-                      <span className="text-3xl font-black text-primary tracking-tighter">
-                        ₹{currentPrice}
+                      <span className={cn(
+                        "text-3xl font-black tracking-tighter",
+                        isFree ? "text-emerald-600 dark:text-emerald-400" : "text-primary"
+                      )}>
+                        {priceLabel}
                       </span>
                     </div>
                   </div>
@@ -500,7 +546,7 @@ export default function BookSession() {
                     onClick={handleProceedToPay}
                     className="uppercase tracking-widest text-xs"
                   >
-                    {paymentProcessing ? "Processing" : "Confirm & Pay"}
+                    {paymentProcessing ? "Processing" : isFree ? "Confirm Booking" : "Confirm & Pay"}
                   </Button>
                 </div>
             </div>

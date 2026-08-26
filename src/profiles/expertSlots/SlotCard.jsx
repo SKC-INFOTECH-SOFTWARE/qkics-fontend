@@ -1,5 +1,18 @@
 import { MdEdit, MdDelete, MdOutlineSchedule, MdGroups } from "react-icons/md";
 
+/* One-to-one price cell: "Free" (green), a ₹ price (primary), or N/A (muted). */
+function PriceValue({ free, price }) {
+  if (free) {
+    return <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">Free</span>;
+  }
+  const hasPrice = Number(price) > 0;
+  return (
+    <span className={`text-base font-bold ${hasPrice ? "text-primary" : "text-muted-foreground"}`}>
+      {hasPrice ? `₹${price}` : "N/A"}
+    </span>
+  );
+}
+
 export default function SlotCard({
   slot,
   onEdit,
@@ -50,7 +63,9 @@ export default function SlotCard({
           <>
             <div>
               <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Per User</span>
-              <span className="text-base font-bold text-primary">₹{slot.batch_price}</span>
+              <span className={`text-base font-bold ${slot.is_batch_free ? "text-emerald-600 dark:text-emerald-400" : "text-primary"}`}>
+                {slot.is_batch_free ? "Free" : `₹${slot.batch_price}`}
+              </span>
             </div>
             <div>
               <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Seats</span>
@@ -63,15 +78,11 @@ export default function SlotCard({
           <>
             <div>
               <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Chat Price</span>
-              <span className={`text-base font-bold ${Number(slot.chat_price) > 0 ? "text-primary" : "text-muted-foreground"}`}>
-                {Number(slot.chat_price) > 0 ? `₹${slot.chat_price}` : "N/A"}
-              </span>
+              <PriceValue free={slot.is_chat_free} price={slot.chat_price} />
             </div>
             <div>
               <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-muted-foreground">Video Price</span>
-              <span className={`text-base font-bold ${Number(slot.video_call_price) > 0 ? "text-primary" : "text-muted-foreground"}`}>
-                {Number(slot.video_call_price) > 0 ? `₹${slot.video_call_price}` : "N/A"}
-              </span>
+              <PriceValue free={slot.is_video_call_free} price={slot.video_call_price} />
             </div>
           </>
         )}
