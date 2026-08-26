@@ -15,8 +15,10 @@ function CreatePostModal({ onClose, onSuccess, post, knowledgeHub = false }) {
     setContent(post.content || "");
   }, [post]);
 
+  // Selected tags are tracked by NAME now — nothing is created on the server
+  // until the post is saved, so there are no ids to key off for brand-new tags.
   const [selectedTags, setSelectedTags] = useState(
-    post ? post.tags.map((t) => t.id) : []
+    post ? post.tags.map((t) => t.name) : []
   );
 
   const [mediaFiles, setMediaFiles] = useState([]);
@@ -30,62 +32,55 @@ function CreatePostModal({ onClose, onSuccess, post, knowledgeHub = false }) {
   const { tags, loading: loadingTags } = useTags();
   const [loading, setLoading] = useState(false);
 
-  // Tags the user typed in this session (not yet in the shared cache). Merge
-  // them in so the newly-created tag shows as a selectable/selected chip.
+  // Tags the user typed this session but hasn't saved yet. They live only in
+  // the browser — the server row is created when the post is saved, not before.
   const [localTags, setLocalTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
-  const [addingTag, setAddingTag] = useState(false);
 
   const allTags = useMemo(() => {
     const seen = new Set();
     return [...localTags, ...tags].filter((t) => {
-      if (seen.has(t.id)) return false;
-      seen.add(t.id);
+      const key = t.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
   }, [tags, localTags]);
 
   const toggleTag = (tag) => {
-    if (selectedTags.includes(tag.id)) {
-      setSelectedTags(selectedTags.filter((t) => t !== tag.id));
+    if (selectedTags.includes(tag.name)) {
+      setSelectedTags(selectedTags.filter((n) => n !== tag.name));
     } else {
       if (selectedTags.length >= 5) {
         showAlert("Max 5 tags allowed", "warning");
         return;
       }
-      setSelectedTags([...selectedTags, tag.id]);
+      setSelectedTags([...selectedTags, tag.name]);
     }
   };
 
-  const handleAddTag = async () => {
+  const handleAddTag = () => {
     const name = tagInput.trim();
     if (!name) return;
     if (selectedTags.length >= 5) {
       showAlert("Max 5 tags allowed", "warning");
       return;
     }
-    // Already exists (case-insensitive)? Just select it, don't create a dupe.
+    // Already in the picker or added this session (case-insensitive)? Just
+    // select it — don't add a duplicate chip.
     const existing = allTags.find((t) => t.name.toLowerCase() === name.toLowerCase());
     if (existing) {
-      if (!selectedTags.includes(existing.id)) {
-        setSelectedTags([...selectedTags, existing.id]);
+      if (!selectedTags.includes(existing.name)) {
+        setSelectedTags([...selectedTags, existing.name]);
       }
       setTagInput("");
       return;
     }
-    try {
-      setAddingTag(true);
-      const res = await axiosSecure.post("/v1/community/tags/", { name });
-      const tag = res.data;
-      setLocalTags((prev) => [tag, ...prev]);
-      setSelectedTags((prev) => (prev.includes(tag.id) ? prev : [...prev, tag.id]));
-      setTagInput("");
-    } catch (err) {
-      console.error(err);
-      showAlert(err.response?.data?.error || "Could not add tag", "error");
-    } finally {
-      setAddingTag(false);
-    }
+    // Brand-new tag: keep it local + selected. No API call — the backend
+    // creates the row (get-or-create) only when the post is actually saved.
+    setLocalTags((prev) => [{ id: `new-${name.toLowerCase()}`, name }, ...prev]);
+    setSelectedTags((prev) => [...prev, name]);
+    setTagInput("");
   };
 
   const handleMediaChange = (e) => {
@@ -196,7 +191,7 @@ function CreatePostModal({ onClose, onSuccess, post, knowledgeHub = false }) {
       formData.append("preview_content", preview_content);
       formData.append("full_content", full_content);
       formData.append("knowledge_hub", knowledgeHub ? "true" : "false");
-      selectedTags.forEach((id) => formData.append("tags", id));
+      selectedTags.forEach((name) => formData.append("tags", name));
 
       if (post) {
         // --- EDIT FLOW ---
@@ -335,8 +330,7 @@ function CreatePostModal({ onClose, onSuccess, post, knowledgeHub = false }) {
                 type="button"
                 variant="outline"
                 onClick={handleAddTag}
-                loading={addingTag}
-                disabled={!tagInput.trim() || addingTag}
+                disabled={!tagInput.trim()}
               >
                 Add
               </Button>
@@ -353,7 +347,7 @@ function CreatePostModal({ onClose, onSuccess, post, knowledgeHub = false }) {
             ) : (
               <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                 {allTags.map((tag) => {
-                  const active = selectedTags.includes(tag.id);
+                  const active = selectedTags.includes(tag.name);
                   return (
                     <button
                       key={tag.id}
