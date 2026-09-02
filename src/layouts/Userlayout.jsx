@@ -32,6 +32,7 @@ import { UserLayoutProvider, useUserLayout } from "./Userlayoutcontext";
 // Lazy-load modals — they are heavy and rarely needed simultaneously
 const LoginModal        = lazy(() => import("../components/auth/login"));
 const SignupModal       = lazy(() => import("../components/auth/Signup"));
+const ForgotPasswordModal = lazy(() => import("../components/auth/ForgotPassword"));
 const ChangePasswordModal = lazy(() => import("../components/auth/change_password"));
 const CreatePostModal   = lazy(() => import("../components/posts/create_post"));
 
@@ -54,10 +55,10 @@ function UserLayoutInner() {
   const toggleTheme = () => dispatch(setTheme(theme === "dark" ? "light" : "dark"));
 
   const {
-    showLogin, showSignup, showChangePass, showCreatePost,
+    showLogin, showSignup, showForgot, showChangePass, showCreatePost,
     openLogin, openCreatePost,
-    closeLogin, closeSignup, closeChangePass, closeCreatePost,
-    switchToSignup, switchToLogin,
+    closeLogin, closeSignup, closeForgot, closeChangePass, closeCreatePost,
+    switchToSignup, switchToLogin, switchToForgot,
   } = useUserLayout();
 
   // ── CreatePost success handler ───────────────────────────────────────────
@@ -128,6 +129,18 @@ function UserLayoutInner() {
             <LoginModal
               onClose={closeLogin}
               openSignup={switchToSignup}
+              openForgot={switchToForgot}
+            />
+          </Suspense>
+        </ModalOverlay>
+      )}
+
+      {showForgot && (
+        <ModalOverlay close={closeForgot}>
+          <Suspense fallback={<ModalLoader />}>
+            <ForgotPasswordModal
+              onClose={closeForgot}
+              openLogin={switchToLogin}
             />
           </Suspense>
         </ModalOverlay>

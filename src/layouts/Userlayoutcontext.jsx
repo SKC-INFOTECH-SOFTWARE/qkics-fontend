@@ -26,6 +26,7 @@ export function UserLayoutProvider({ children }) {
   // ── Modal visibility ──────────────────────────────────────────────────────
   const [showLogin, setShowLogin]           = useState(false);
   const [showSignup, setShowSignup]         = useState(false);
+  const [showForgot, setShowForgot]         = useState(false);
   const [showChangePass, setShowChangePass] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
 
@@ -35,6 +36,9 @@ export function UserLayoutProvider({ children }) {
 
   const openSignup      = useCallback(() => setShowSignup(true),      []);
   const closeSignup     = useCallback(() => setShowSignup(false),     []);
+
+  const openForgot      = useCallback(() => setShowForgot(true),      []);
+  const closeForgot     = useCallback(() => setShowForgot(false),     []);
 
   const openChangePass  = useCallback(() => setShowChangePass(true),  []);
   const closeChangePass = useCallback(() => setShowChangePass(false), []);
@@ -50,7 +54,13 @@ export function UserLayoutProvider({ children }) {
 
   const switchToLogin = useCallback(() => {
     setShowSignup(false);
+    setShowForgot(false);
     setShowLogin(true);
+  }, []);
+
+  const switchToForgot = useCallback(() => {
+    setShowLogin(false);
+    setShowForgot(true);
   }, []);
 
   return (
@@ -59,24 +69,28 @@ export function UserLayoutProvider({ children }) {
         // state (read-only — use the openers/closers below)
         showLogin,
         showSignup,
+        showForgot,
         showChangePass,
         showCreatePost,
 
         // openers
         openLogin,
         openSignup,
+        openForgot,
         openChangePass,
         openCreatePost,
 
         // closers
         closeLogin,
         closeSignup,
+        closeForgot,
         closeChangePass,
         closeCreatePost,
 
         // switchers
         switchToSignup,
         switchToLogin,
+        switchToForgot,
       }}
     >
       {children}

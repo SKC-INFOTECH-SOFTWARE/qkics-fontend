@@ -8,7 +8,7 @@ import { loginUser, fetchUserProfile } from "../../redux/slices/userSlice";
 import { useAlert } from "../../context/AlertContext";
 import { Button, Input } from "../ui";
 
-function LoginModal({ onClose, openSignup }) {
+function LoginModal({ onClose, openSignup, openForgot }) {
   const dispatch = useDispatch();
   const { showAlert } = useAlert();
 
@@ -109,6 +109,17 @@ function LoginModal({ onClose, openSignup }) {
           </button>
         </div>
       </div>
+
+      {openForgot && (
+        <div className="mt-3 text-right">
+          <button
+            onClick={openForgot}
+            className="text-2xs font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+          >
+            Forgot password?
+          </button>
+        </div>
+      )}
 
       <Button
         onClick={handleLogin}

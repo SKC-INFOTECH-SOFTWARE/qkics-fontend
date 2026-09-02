@@ -30,6 +30,10 @@ function SignupModal({ onClose, openLogin }) {
 
   const [loading, setLoading] = useState(false);
 
+  // Email-OTP verification step: 1 = details, 2 = enter code
+  const [step, setStep] = useState(1);
+  const [otp, setOtp] = useState("");
+
   // USERNAME VALIDATION
   const handleUsernameChange = async (value) => {
     value = value.toLowerCase();
@@ -117,63 +121,95 @@ function SignupModal({ onClose, openLogin }) {
     }
   };
 
-  // SUBMIT SIGNUP
-  const handleSignup = async () => {
+  // STEP 1 → validate details, then email an OTP and advance to step 2
+  const sendOtp = async () => {
     if (!username || !password || !password2) {
       showAlert("Enter required fields", "warning");
       return;
     }
-
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      showAlert("Enter a valid email — we'll send a verification code", "warning");
+      return;
+    }
     if (password.length < 4) {
       showAlert("Password must be at least 4 characters", "warning");
       return;
     }
-
     if (password !== password2) {
       showAlert("Passwords do not match", "error");
       return;
     }
-
     if (usernameErr || emailErr || phoneErr) {
       showAlert("Fix validation errors", "warning");
       return;
     }
 
     setLoading(true);
-
     try {
-      const payload = {
+      await axios.post(`${API_BASE_URL}/v1/auth/register/send-otp/`, { email });
+      showAlert("Verification code sent to your email.", "success");
+      setStep(2);
+    } catch (err) {
+      showAlert(
+        err.response?.data?.email?.[0] ||
+          err.response?.data?.error ||
+          "Could not send code. Try again.",
+        "error"
+      );
+    }
+    setLoading(false);
+  };
+
+  // STEP 2 → verify the OTP, then create the account and log in
+  const verifyAndCreate = async () => {
+    if (!otp || otp.length < 4) {
+      showAlert("Enter the code from your email", "warning");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1) Verify the email OTP
+      await axios.post(`${API_BASE_URL}/v1/auth/register/verify-otp/`, {
+        email,
+        code: otp,
+      });
+
+      // 2) Create the account (backend requires a verified email)
+      await axios.post(`${API_BASE_URL}/v1/auth/register/`, {
         username,
         password,
         password2,
         email,
         phone,
         user_type: "normal",
-      };
+      });
 
-      await axios.post(`${API_BASE_URL}/v1/auth/register/`, payload);
-
+      // 3) Log in
       const result = await dispatch(loginUser({ username, password }));
-
       if (loginUser.rejected.match(result)) {
         showAlert("Signup succeeded but login failed", "error");
+        setLoading(false);
         return;
       }
-
       await dispatch(fetchUserProfile());
 
-      // No window.location.reload() — Redux is already updated; React re-renders.
       showAlert("Signup successful!", "success");
       onClose();
     } catch (err) {
       showAlert(
-        err.response?.data?.message || "Signup failed. Try again.",
+        err.response?.data?.error ||
+          err.response?.data?.email ||
+          err.response?.data?.message ||
+          "Verification failed. Check the code and try again.",
         "error"
       );
     }
-
     setLoading(false);
   };
+
+  // Primary button dispatches based on the current step
+  const handleSignup = () => (step === 1 ? sendOtp() : verifyAndCreate());
 
   // Keep the keydown listener calling the latest handleSignup without
   // re-registering (avoids stacked listeners / stale-closure double submit).
@@ -203,6 +239,8 @@ function SignupModal({ onClose, openLogin }) {
         </button>
       </div>
 
+      {step === 1 && (
+      <>
       {/* USERNAME */}
       <Input
         type="text"
@@ -269,6 +307,43 @@ function SignupModal({ onClose, openLogin }) {
         onChange={(e) => handlePhoneChange(e.target.value)}
         error={phoneErr}
       />
+      </>
+      )}
+
+      {step === 2 && (
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Enter the code we sent to{" "}
+            <span className="font-bold text-foreground">{email}</span>.
+          </p>
+          <Input
+            type="text"
+            inputMode="numeric"
+            placeholder="6-digit code"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 8))}
+            className="tracking-[0.4em] text-center font-bold"
+          />
+          <div className="flex justify-between">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              disabled={loading}
+              className="text-2xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            >
+              ← Edit details
+            </button>
+            <button
+              type="button"
+              onClick={sendOtp}
+              disabled={loading}
+              className="text-2xs font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+            >
+              Resend code
+            </button>
+          </div>
+        </div>
+      )}
 
       <Button
         onClick={handleSignup}
@@ -277,7 +352,9 @@ function SignupModal({ onClose, openLogin }) {
         size="lg"
         className="uppercase tracking-widest font-black"
       >
-        {loading ? "Creating..." : "Create Account"}
+        {loading
+          ? step === 1 ? "Sending..." : "Creating..."
+          : step === 1 ? "Continue" : "Verify & Create Account"}
       </Button>
 
       <div className="pt-2 text-center">
